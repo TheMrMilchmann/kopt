@@ -4,8 +4,9 @@
 kopt
 ====
 
-kopt is a small framework for platform independent library for reading command
-line arguments.
+kopt is a small command line parser library for the JVM.
+
+*kopt is fully compatible with Java and Kotlin.*
 
 Command Line Argument Convention
 --------------------------------
