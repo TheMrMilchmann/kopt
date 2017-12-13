@@ -1,7 +1,7 @@
 plugins {
     maven
     signing
-    kotlin("jvm") version "1.2.0"
+    kotlin("jvm") version "1.1.60"
 }
 
 val nextVersion = "0.1.0"
@@ -108,7 +108,7 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib-jdk8"))
+    compile(kotlin("stdlib-jre8"))
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
     testCompile("org.testng:testng:6.13.1")

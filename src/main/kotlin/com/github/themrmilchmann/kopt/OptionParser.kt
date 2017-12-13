@@ -3,7 +3,6 @@
 package com.github.themrmilchmann.kopt
 
 import kotlin.jvm.*
-import kotlin.math.*
 
 private val PATTERN_ALPHANUMERIC = "[^A-Za-z0-9]".toRegex()
 
@@ -84,7 +83,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                         else
                             values[arg] = it
                     } ?: throw ParsingException("Could not parse argument value")
-                argIndex = min(argIndex + 1, if (pool.isLastVararg) pool.args.size - 1 else pool.args.size)
+                argIndex = Math.min(argIndex + 1, if (pool.isLastVararg) pool.args.size - 1 else pool.args.size)
                 nextNonWhitespace()
             }
         }
