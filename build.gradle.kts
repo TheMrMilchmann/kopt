@@ -52,6 +52,10 @@ signing {
 }
 
 tasks {
+    "test"(Test::class) {
+        useTestNG()
+    }
+
     "jar"(Jar::class) {
         baseName = project.name
     }
