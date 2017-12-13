@@ -1,0 +1,243 @@
+package com.github.themrmilchmann.kopt
+
+/**
+ * An [OptionSet] represents a collection of [Argument]s and [Option]s
+ * associated with their values.
+ *
+ * An `OptionSet` is always tied to an [OptionPool]. All methods that have an
+ * `Argument` or `Option` parameter throw on error if the passed value is not
+ * available for this set, that is, this sets pool does not contain the argument
+ * or option, unless explicitly stated.
+ *
+ * @see OptionPool
+ * @see OptionParser
+ *
+ * @since 1.0.0
+ *
+ * @author Leon Linhart <themrmilchmann@gmail.com>
+ */
+class OptionSet internal constructor(
+    val pool: OptionPool,
+    private val values: Map<Any, Any?>
+) {
+
+    /**
+     * Returns the explicitly set value for the given [Argument], or `null` if
+     * no value has been set explicitly.
+     *
+     * **NOTE:** Default values are not explicitly set values.
+     *
+     * @param [VT]  the type of the arguments value
+     * @param arg   the argument whose value is to be queried
+     *
+     * @return the explicitly set value for the given argument, or `null`
+
+     * @throws IllegalArgumentException if the given argument is not available
+     *                                  for this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    operator fun <VT> get(arg: Argument<VT>): VT? {
+        arg.checkAvailability()
+        arg.assertNoVararg()
+        return values[arg] as? VT
+    }
+
+    /**
+     * Returns the explicitly set value for the given [Option], or `null` if no
+     * value has been set explicitly
+     *
+     * **NOTE:** Default values are not explicitly set values.
+     *
+     * @param [VT]  the type of the options value
+     * @param opt   the option whose value is to be queried
+     *
+     * @return the explicitly set value for the given option, or `null`
+     *
+     * @throws IllegalArgumentException if the given option is not available for
+     *                                  this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    operator fun <VT> get(opt: Option<VT>): VT? {
+        opt.checkAvailability()
+        return values[opt] as? VT
+    }
+
+    /**
+     * Returns the explicitly set value for the given [Argument], the default
+     * value of the argument if no value has been set explicitly, or `null` if
+     * neither of the previous ones has been set.
+     *
+     * @param [VT]  the type of the arguments value
+     * @param arg   the argument whose value is to be queried
+     *
+     * @return the explicitly set value for the given argument, its default
+     *         value, or `null`
+     *
+     * @throws IllegalArgumentException if the given argument is not available
+     *                                  for this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <VT> getOrDefault(arg: Argument<VT>): VT? = getOrDefault(arg, null)
+
+    /**
+     * Returns the explicitly set value for the given [Option], the default
+     * value of the option if no value has been set explicitly, or `null` if
+     * neither of the previous ones has been set.
+     *
+     * @param [VT]  the type of the options value
+     * @param opt   the option whose value is to be queried
+     *
+     * @return the explicitly set value for the given option, its default value,
+     *         or `null`
+     *
+     * @throws IllegalArgumentException if the given option is not available for
+     *                                  this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <VT> getOrDefault(opt: Option<VT>): VT? = getOrDefault(opt, null)
+
+    /**
+     * Returns the explicitly set value for the given [Argument], the default
+     * value of the given argument if no value has been set explicitly, or the
+     * given alternative.
+     *
+     * @param [VT]  the type of the arguments value
+     * @param arg   the argument whose value is to be queried
+     * @param alt   the alternate value to be returned
+     *
+     * @return the explicitly set value for the given argument, its default
+     *         value, or the given alternative
+     *
+     * @throws IllegalArgumentException if the given argument is not available
+     *                                  for this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <VT> getOrDefault(arg: Argument<VT>, alt: VT?): VT? {
+        arg.checkAvailability()
+        arg.assertNoVararg()
+        return when (arg) {
+            in values -> values[arg] as? VT
+            else -> if (arg.hasDefault()) arg.defaultValue else alt
+        }
+    }
+
+    /**
+     * Returns the explicitly set value for the given [Option], the default
+     * value of the given option if no value has been set explicitly, or the
+     * given alternative.
+     *
+     * @param [VT]  the type of the options value
+     * @param opt   the option whose value is to be queried
+     * @param alt   the alternate value to be returned
+     *
+     * @return the explicitly set value for the given option, its default value,
+     * or the given alternative
+     *
+     * @throws IllegalArgumentException if the given option is not available for
+     *                                  this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <VT> getOrDefault(opt: Option<VT>, alt: VT?): VT? {
+        opt.checkAvailability()
+        return when (opt) {
+            in values -> values[opt] as? VT
+            else -> if (opt.hasDefault()) opt.defaultValue else alt
+        }
+    }
+
+    /**
+     * Returns the values set for the underlying [OptionPool]'s vararg argument.
+     *
+     * @param [VT]  the type of the arguments value
+     * @param arg the argument whose value is to be queried
+     *
+     * @return the values set for the given argument
+     *
+     * @throws IllegalArgumentException if the given argument is not available
+     *                                  for this set, or if the given argument
+     *                                  is not a vararg argument for this set
+     *
+     * @since 1.0.0
+     */
+    @Suppress("UNCHECKED_CAST")
+    fun <VT> getVarargValues(arg: Argument<*>): Collection<VT?> {
+        arg.checkAvailability()
+        arg.assertNoVararg()
+        return when (arg) {
+            in values -> values[arg] as Collection<VT?>
+            else -> if (arg.hasDefault()) listOf(arg.defaultValue as VT?) else emptyList()
+        }
+    }
+
+    /**
+     * Returns whether or not the given [Argument] has an explicitly set value
+     * in this set.
+     *
+     * **NOTE:** Default values are not explicitly set values.
+     *
+     * @param arg the argument whose value is to be queried
+     *
+     * @return `true` if the given argument has an explicitly set value in this
+     *         set, or `false` otherwise
+     *
+     * @throws IllegalArgumentException if the given argument is not available
+     *                                  for this set
+     *
+     * @since 1.0.0
+     */
+    @JvmName("hasExplicitlySetValue")
+    operator fun contains(arg: Argument<*>): Boolean {
+        arg.checkAvailability()
+        return arg in values
+    }
+
+    /**
+     * Returns whether or not the given [Option] has an explicitly set value in
+     * this set.
+     *
+     * **NOTE:** Default values are not explicitly set values.
+     *
+     * @param opt the argument whose value is to be queried
+     *
+     * @return `true` if the given option has an explicitly set value in this
+     *         set, or `false` otherwise
+     *
+     * @throws IllegalArgumentException if the given option is not available for
+     *                                  this set
+     *
+     * @since 1.0.0
+     */
+    @JvmName("hasExplicitlySetValue")
+    operator fun contains(opt: Option<*>): Boolean {
+        opt.checkAvailability()
+        return opt in values
+    }
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Argument<*>.isVararg() = pool.isLastVararg && this === pool.args.last()
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Argument<*>.assertVararg() { if (!isVararg()) throw IllegalArgumentException("Argument is not a vararg argument for this set: $this") }
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Argument<*>.assertNoVararg() { if (isVararg()) throw IllegalArgumentException("Argument is a vararg argument for this set: $this") }
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Argument<*>.checkAvailability() { if (this !in pool) throw IllegalArgumentException("Argument is not available for this set: $this") }
+
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun Option<*>.checkAvailability() { if (this !in pool) throw IllegalArgumentException("Option is not available for this set: $this") }
+
+}
