@@ -1,3 +1,15 @@
+import org.gradle.jvm.tasks.Jar
+
+/* buildscript { TODO wait for Dokka 0.9.16
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.15")
+    }
+}*/
+
 plugins {
     maven
     signing
@@ -12,7 +24,61 @@ version = when (deployment.type) {
     else -> nextVersion
 }
 
+artifacts {
+    fun artifactNotation(artifact: String, classifier: String? = null) =
+        if (classifier == null) {
+            mapOf(
+                "file" to File(buildDir, "libs/$artifact-$version.jar"),
+                "name" to artifact,
+                "type" to "jar"
+            )
+        } else {
+            mapOf(
+                "file" to File(buildDir, "libs/$artifact-$version-$classifier.jar"),
+                "name" to artifact,
+                "type" to "jar",
+                "classifier" to classifier
+            )
+        }
+
+    add("archives", artifactNotation(project.name))
+    add("archives", artifactNotation(project.name, "sources"))
+    add("archives", artifactNotation(project.name, "javadoc"))
+}
+
+signing {
+    isRequired = deployment.type == BuildType.RELEASE
+    sign(configurations["archives"])
+}
+
 tasks {
+    "jar"(Jar::class) {
+        baseName = project.name
+    }
+
+    val sourcesJar = "sourcesJar"(Jar::class) {
+        baseName = project.name
+        classifier = "sources"
+        from(java.sourceSets["main"].allSource)
+    }
+/*
+    val dokka = "dokka"(DokkaTask::class) {
+        outputFormat = "javadoc"
+        outputDirectory = "$buildDir/javadoc"
+    }
+*/
+    val javadocJar = "javadocJar"(Jar::class) {
+        //dependsOn(dokka)
+
+        baseName = project.name
+        classifier = "javadoc"
+        from(File(buildDir, "javadoc"))
+    }
+
+    "signArchives" {
+        dependsOn(sourcesJar, javadocJar)
+    }
+
     "uploadArchives"(Upload::class) {
         repositories {
             withConvention(MavenRepositoryHandlerConvention::class) {
