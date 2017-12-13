@@ -178,7 +178,7 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib-jre8"))
+    compile(kotlin("stdlib-jre8", "1.1.60"))
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
     testCompile("org.testng:testng:6.13.1")
