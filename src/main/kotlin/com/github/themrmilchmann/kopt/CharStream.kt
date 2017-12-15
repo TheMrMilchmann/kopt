@@ -51,6 +51,23 @@ val CharSequence.stream
     }
 
 /**
+ * Joins all elements of the array to a single String and returns a new stream
+ * for the joined String.
+ *
+ * @receiver the array to wrap
+ *
+ * @return a stream representation of the given aray
+ *
+ * @since 1.0.0
+ */
+val Array<String>.stream
+    @JvmName("streamOf") get() = this.joinToString(" ") {
+        "\"${it.removePrefix("\"")
+            .removeSuffix("\"")
+            .replace("\"", "\\\"")}\""
+    }.stream
+
+/**
  * A parsable stream of characters.
  *
  * @see OptionParser
