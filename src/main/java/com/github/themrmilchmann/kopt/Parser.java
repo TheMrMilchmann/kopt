@@ -109,6 +109,15 @@ public interface Parser<VT> {
     Parser<Double> DOUBLE = Double::valueOf;
 
     /**
+     * A simple parser for parsing {@code String} values.
+     *
+     * <p>This parser delegates to {@link Double#valueOf(String)}</p>
+     *
+     * @since 1.0.0
+     */
+    Parser<String> STRING = String::valueOf;
+
+    /**
      * Parse a value from a given {@linkplain String}.
      *
      * @param string the {@code String} to be parsed
