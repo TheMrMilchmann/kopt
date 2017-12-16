@@ -1,4 +1,5 @@
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 
 /* buildscript { TODO wait for Dokka 0.9.16
     repositories {
@@ -13,7 +14,7 @@ import org.gradle.jvm.tasks.Jar
 plugins {
     maven
     signing
-    kotlin("jvm") version "1.1.60"
+    kotlin("jvm") version "1.2.10"
 }
 
 val nextVersion = "0.1.0"
@@ -189,7 +190,7 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib-jre8", "1.1.60"))
+    compile(kotlin("stdlib-jre8", "1.2.10"))
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
     testCompile("org.testng:testng:6.13.1")
