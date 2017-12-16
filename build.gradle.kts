@@ -149,6 +149,13 @@ tasks {
     }
 }
 
+tasks.withType<KotlinCompile<*>> {
+    kotlinOptions.languageVersion = "1.2"
+    kotlinOptions.apiVersion = "1.1"
+
+    kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict")
+}
+
 val Project.deployment: Deployment
     get() = when {
         hasProperty("release") -> Deployment(
