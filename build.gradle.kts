@@ -58,6 +58,17 @@ tasks {
 
     "jar"(Jar::class) {
         baseName = project.name
+
+        manifest {
+            attributes(mapOf(
+                "Name" to "kopt",
+                "Specification-Version" to project.version,
+                "Specification-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>",
+                "Implementation-Version" to project.version,
+                "Implementation-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>",
+                "Automatic-Module-Name" to "com.github.themrmilchmann.kopt"
+            ))
+        }
     }
 
     val sourcesJar = "sourcesJar"(Jar::class) {
