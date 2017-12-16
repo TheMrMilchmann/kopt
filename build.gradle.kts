@@ -1,5 +1,6 @@
 import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
 
 /* buildscript { TODO wait for Dokka 0.9.16
     repositories {
@@ -149,9 +150,15 @@ tasks {
     }
 }
 
-tasks.withType<KotlinCompile<*>> {
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+tasks.withType<KotlinJvmCompile> {
     kotlinOptions.languageVersion = "1.2"
     kotlinOptions.apiVersion = "1.1"
+    kotlinOptions.jvmTarget = "1.8"
 
     kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict")
 }
