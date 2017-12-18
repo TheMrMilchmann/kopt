@@ -202,12 +202,12 @@ class OptionSet internal constructor(
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
-    fun <VT> getVarargValues(arg: Argument<*>): Collection<VT?> {
+    fun <VT> getVarargValues(arg: Argument<VT>): Collection<VT?> {
         arg.checkAvailability()
-        arg.assertNoVararg()
+        arg.assertVararg()
         return when (arg) {
             in values -> values[arg] as Collection<VT?>
-            else -> if (arg.hasDefault()) listOf(arg.defaultValue as VT?) else emptyList()
+            else -> if (arg.hasDefault()) listOf(arg.defaultValue) else emptyList()
         }
     }
 

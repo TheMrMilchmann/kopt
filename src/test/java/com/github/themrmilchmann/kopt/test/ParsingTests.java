@@ -33,6 +33,7 @@ package com.github.themrmilchmann.kopt.test;
 import com.github.themrmilchmann.kopt.*;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Random;
 
 import static org.testng.Assert.*;
@@ -103,6 +104,22 @@ public final class ParsingTests {
             OptionSet set = OptionParser.parse(CharStreams.streamOf(s.contains(" ") ? "\"" + s.replace("\"", "\\\"") + "\"" : s.replace("\"", "\\\"")), pool);
             assertEquals(set.get(arg0), s);
         }
+    }
+
+    public void parseVararg() {
+        Argument<String> arg0 = new Argument.Builder<>((it) -> it).create();
+        OptionPool pool = new OptionPool.Builder()
+                .withVararg(arg0)
+                .create();
+
+        String[] strings = {
+            "Wackelpudding",
+            "Alles Im Eimer",
+            "Noch Mehr \"Tests\"..."
+        };
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf(strings), pool);
+        assertTrue(Arrays.equals(strings, set.getVarargValues(arg0).toArray()));
     }
 
 }

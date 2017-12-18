@@ -119,7 +119,8 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
         }
     }
 
-    if (argIndex < pool.firstOptionalArg) throw ParsingException("Not all required arguments have been specified")
+    if (argIndex < pool.firstOptionalArg && !(pool.isLastVararg && argIndex == pool.args.size - 1))
+        throw ParsingException("Not all required arguments have been specified")
 
     if (_varargValues.isInitialized()) values[pool.args.last()] = varargValues
     return OptionSet(pool, values)
