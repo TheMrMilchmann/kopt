@@ -50,7 +50,6 @@ public final class OptionPoolBuilderTests {
         new OptionPool.Builder()
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN, true).create())
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN).create());
-
     }
 
 }
