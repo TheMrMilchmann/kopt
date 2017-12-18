@@ -56,7 +56,7 @@ val CharSequence.stream
  *
  * @receiver the array to wrap
  *
- * @return a stream representation of the given aray
+ * @return a stream representation of the given array
  *
  * @since 1.0.0
  */
