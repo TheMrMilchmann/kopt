@@ -33,11 +33,11 @@ package com.github.themrmilchmann.kopt
 /**
  * An `OptionPool` is a pool of available [Argument]s and [Option]s.
  *
- * @param [args] the arguments available in this pool
- * @param [lOptions] the options available in this pool (by long tokens)
- * @param [sOptions] the options available in this pool (by short tokens)
- * @param [firstOptionalArg] the index of the first optional argument
- * @param [isLastVararg] `true` if the last argument is a vararg argument
+ * @param args              the arguments available in this pool
+ * @param lOptions          the options available in this pool (by long tokens)
+ * @param sOptions          the options available in this pool (by short tokens)
+ * @param firstOptionalArg  the index of the first optional argument
+ * @param isLastVararg      `true` if the last argument is a vararg argument
  *
  * @since 1.0.0
  *
@@ -54,7 +54,7 @@ class OptionPool private constructor(
     /**
      * Returns whether or not the given [Argument] is in this pool.
      *
-     * @param [arg] the argument to do the check for
+     * @param arg the argument to do the check for
      *
      * @return `true` if the given argument is in this pool, or `false`
      *         otherwise
@@ -66,7 +66,7 @@ class OptionPool private constructor(
     /**
      * Returns whether or not the given [Option] is in this pool.
      *
-     * @param [opt] the option to do the check for
+     * @param opt the option to do the check for
      *
      * @return `true` if the given option is in this pool, or `false` otherwise
      *
@@ -78,7 +78,7 @@ class OptionPool private constructor(
      * Returns the index of the given `arg` or `-1` if the specified argument is
      * not contained in this pool.
      *
-     * @param [arg] the argument whose index is to be queried
+     * @param arg the argument whose index is to be queried
      *
      * @return the index of the given argument or `-1`
      *
@@ -126,7 +126,7 @@ class OptionPool private constructor(
         /**
          * Adds the given [Argument] to the pool of available arguments.
          *
-         * @param [arg] the argument to be added
+         * @param arg the argument to be added
          *
          * @return this builder instance
          *
@@ -151,7 +151,7 @@ class OptionPool private constructor(
          * Adds the given [Argument] as vararg argument to the pool of available
          * arguments.
          *
-         * @param [arg] the argument to be added as vararg argument
+         * @param arg the argument to be added as vararg argument
          *
          * @return this builder instance
          *
@@ -175,7 +175,7 @@ class OptionPool private constructor(
         /**
          * Adds the given [Option] to the pool of available options.
          *
-         * @param [opt] the option to be added
+         * @param opt the option to be added
          *
          * @return this builder instance
          *
