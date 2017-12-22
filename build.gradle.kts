@@ -116,7 +116,7 @@ tasks {
                             "artifactId"(project.name)
 
                             "name"(project.name)
-                            "description"("Kotlin CLI argument parser")
+                            "description"("Simple CLI argument parser for the JVM")
                             "packaging"("jar")
                             "url"("https://github.com/TheMrMilchmann/kopt")
 
