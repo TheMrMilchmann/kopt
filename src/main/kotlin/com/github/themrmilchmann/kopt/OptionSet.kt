@@ -69,7 +69,7 @@ class OptionSet internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     operator fun <VT> get(arg: Argument<VT>): VT? {
-        arg.checkAvailability()
+        arg.assertAvailable()
         arg.assertNoVararg()
         return values[arg] as? VT
     }
@@ -92,7 +92,7 @@ class OptionSet internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     operator fun <VT> get(opt: Option<VT>): VT? {
-        opt.checkAvailability()
+        opt.assertAvailable()
         return values[opt] as? VT
     }
 
@@ -153,7 +153,7 @@ class OptionSet internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     fun <VT> getOrDefault(arg: Argument<VT>, alt: VT?): VT? {
-        arg.checkAvailability()
+        arg.assertAvailable()
         arg.assertNoVararg()
         return when (arg) {
             in values -> values[arg] as? VT
@@ -180,7 +180,7 @@ class OptionSet internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     fun <VT> getOrDefault(opt: Option<VT>, alt: VT?): VT? {
-        opt.checkAvailability()
+        opt.assertAvailable()
         return when (opt) {
             in values -> values[opt] as? VT
             else -> if (opt.hasDefault()) opt.defaultValue else alt
@@ -203,7 +203,7 @@ class OptionSet internal constructor(
      */
     @Suppress("UNCHECKED_CAST")
     fun <VT> getVarargValues(arg: Argument<VT>): Collection<VT?> {
-        arg.checkAvailability()
+        arg.assertAvailable()
         arg.assertVararg()
         return when (arg) {
             in values -> values[arg] as Collection<VT?>
@@ -229,7 +229,7 @@ class OptionSet internal constructor(
      */
     @JvmName("hasExplicitlySetValue")
     operator fun contains(arg: Argument<*>): Boolean {
-        arg.checkAvailability()
+        arg.assertAvailable()
         return arg in values
     }
 
@@ -251,7 +251,7 @@ class OptionSet internal constructor(
      */
     @JvmName("hasExplicitlySetValue")
     operator fun contains(opt: Option<*>): Boolean {
-        opt.checkAvailability()
+        opt.assertAvailable()
         return opt in values
     }
 
@@ -265,9 +265,9 @@ class OptionSet internal constructor(
     private inline fun Argument<*>.assertNoVararg() { if (isVararg()) throw IllegalArgumentException("Argument is a vararg argument for this set: $this") }
 
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun Argument<*>.checkAvailability() { if (this !in pool) throw IllegalArgumentException("Argument is not available for this set: $this") }
+    private inline fun Argument<*>.assertAvailable() { if (this !in pool) throw IllegalArgumentException("Argument is not available for this set: $this") }
 
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun Option<*>.checkAvailability() { if (this !in pool) throw IllegalArgumentException("Option is not available for this set: $this") }
+    private inline fun Option<*>.assertAvailable() { if (this !in pool) throw IllegalArgumentException("Option is not available for this set: $this") }
 
 }
