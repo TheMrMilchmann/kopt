@@ -207,5 +207,7 @@ dependencies {
     compileOnly(kotlin("stdlib-jdk8", "1.2.10"))
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
+    runtime(kotlin("stdlib-jdk8", "[1.0.0,)"))
+
     testCompile("org.testng:testng:6.13.1")
 }
