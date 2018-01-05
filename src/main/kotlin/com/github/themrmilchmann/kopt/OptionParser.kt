@@ -79,7 +79,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                             opt.validateUnsafe(this)
                             values[opt] = this
                         }
-                    } ?: let { if (opt.hasMarkerValue()) values[opt] = opt.markerValue }
+                    } ?: let { if (opt.hasMarkerValue()) values[opt] = opt.markerValue else throw ParsingException("$opt requires a value to be specified") }
                 }
                 else -> {
                     // Option/s by short token/s
@@ -93,14 +93,14 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                         ' ', '=' -> nextString()
                         else -> nextNonWhitespace().let { null }
                     }?.apply {
-                        opts.find(Option<*>::isMarkerOnly)?.let { throw ParsingException("$it requires a value to be set explicitly") }
+                        opts.find(Option<*>::isMarkerOnly)?.let { throw ParsingException("$it must be used as marker option") }
                         opts.forEach {
                             it.parse(this).apply {
                                 it.validateUnsafe(this)
                                 values[it] = this
                             }
                         }
-                    } ?: let { opts.forEach { if (it.hasMarkerValue()) values[it] = it.markerValue } }
+                    } ?: let { opts.forEach { if (it.hasMarkerValue()) values[it] = it.markerValue else throw ParsingException("$it requires a value to be specified") } }
                 }
             }
             else -> {

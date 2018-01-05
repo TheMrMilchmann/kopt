@@ -45,4 +45,13 @@ public final class OptionTests {
         OptionParser.parse(CharStreams.streamOf("--markerOnly=true"), pool);
     }
 
+    @Test(expectedExceptions = ParsingException.class)
+    public void useNonMarkerAsMarker() {
+        OptionPool pool = new OptionPool.Builder()
+                .withOption(new Option.Builder<>("notAMarker", Parser.INT).create())
+                .create();
+
+        OptionParser.parse(CharStreams.streamOf("--notAMarker"), pool);
+    }
+
 }
