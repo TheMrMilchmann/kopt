@@ -183,7 +183,7 @@ class OptionSet internal constructor(
         opt.assertAvailable()
         return when (opt) {
             in values -> values[opt] as? VT
-            else -> if (opt.hasDefault()) opt.defaultValue else alt
+            else -> if (opt.hasDefaultValue()) opt.defaultValue else alt
         }
     }
 

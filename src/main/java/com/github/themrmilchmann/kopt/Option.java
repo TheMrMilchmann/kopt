@@ -57,34 +57,23 @@ public final class Option<VT> {
 
     @Nullable
     private final VT defaultValue;
-    private final boolean hasDefault;
-    private final boolean requiresValue;
+    private final boolean hasDefaultValue;
 
-    private Option(String longToken, @Nullable Character shortToken, Parser<VT> parser, @Nullable Validator<VT> validator, @Nullable VT defaultValue, boolean hasDefault, boolean requiresValue) {
+    @Nullable
+    private final VT markerValue;
+    private final boolean hasMarkerValue;
+    private final boolean isMarkerOnly;
+
+    private Option(String longToken, @Nullable Character shortToken, Parser<VT> parser, @Nullable Validator<VT> validator, @Nullable VT defaultValue, boolean hasDefaultValue, @Nullable VT markerValue, boolean hasMarkerValue, boolean isMarkerOnly) {
         this.shortToken = shortToken;
         this.longToken = longToken;
         this.parser = parser;
         this.validator = validator;
         this.defaultValue = defaultValue;
-        this.hasDefault = hasDefault;
-        this.requiresValue = requiresValue;
-    }
-
-    /**
-     * Returns this option's default value.
-     *
-     * @return this option's default value
-     *
-     * @throws IllegalArgumentException if this option does not have a default value
-     *
-     * @see #hasDefault()
-     *
-     * @since 1.0.0
-     */
-    @Nullable
-    public VT getDefaultValue() {
-        if (!this.hasDefault) throw new IllegalStateException(this.toString() + " does not have a default value");
-        return this.defaultValue;
+        this.hasDefaultValue = hasDefaultValue;
+        this.markerValue = markerValue;
+        this.hasMarkerValue = hasMarkerValue;
+        this.isMarkerOnly = isMarkerOnly;
     }
 
     /**
@@ -112,27 +101,69 @@ public final class Option<VT> {
     }
 
     /**
-     * Returns whether or not this option has a default value-
+     * Returns this option's default value.
      *
-     * @return `true` of this option has a default value, or `false` otherwise
+     * @return this option's default value
+     *
+     * @throws IllegalArgumentException if this option does not have a default value
+     *
+     * @see #hasDefaultValue()
      *
      * @since 1.0.0
      */
-    public boolean hasDefault() {
-        return this.hasDefault;
+    @Nullable
+    public VT getDefaultValue() {
+        if (!this.hasDefaultValue) throw new IllegalStateException(this.toString() + " does not have a default value");
+        return this.defaultValue;
     }
 
     /**
-     * Returns whether or not this option requires a value to be specified
-     * explicitly.
+     * Returns whether or not this option has a default value.
      *
-     * @return {@code true} if this option requires a value, or {@code false}
+     * @return {@code true} if this option has a default value, or {@code false}
      *         otherwise
      *
      * @since 1.0.0
      */
-    public boolean isValueRequired() {
-        return this.requiresValue;
+    public boolean hasDefaultValue() {
+        return this.hasDefaultValue;
+    }
+
+    /**
+     * Returns this option's marker value.
+     *
+     * @return  this option's marker value.
+     *
+     * @since 1.0.0
+     */
+    @Nullable
+    public VT getMarkerValue() {
+        if (!this.hasMarkerValue) throw new IllegalStateException(this.toString() + " does not have a marker value");
+        return this.markerValue;
+    }
+
+    /**
+     * Returns whether or not this option has a marker value.
+     *
+     * @return {@code true} if this option has a marker value, or {@code false}
+     *         otherwise
+     *
+     * @since 1.0.0
+     */
+    public boolean hasMarkerValue() {
+        return this.hasMarkerValue;
+    }
+
+    /**
+     * Returns whether or not this option must be used as a marker option.
+     *
+     * @return {@code true} if this option must be used as a marker, or
+     *         {@code false} otherwise
+     *
+     * @since 1.0.0
+     */
+    public boolean isMarkerOnly() {
+        return this.isMarkerOnly;
     }
 
     @Nullable
@@ -154,9 +185,11 @@ public final class Option<VT> {
         StringBuilder sb = new StringBuilder("Option[");
         sb.append("long=").append(this.longToken);
         if (this.shortToken != null) sb.append(", short=").append(this.shortToken);
-        sb.append(", requiresValue=").append(this.requiresValue);
-        sb.append(", hasDefault=").append(this.hasDefault);
-        if (this.hasDefault) sb.append(", defaultValue=").append(this.defaultValue);
+        sb.append(", hasDefaultValue=").append(this.hasDefaultValue);
+        if (this.hasDefaultValue) sb.append(", defaultValue=").append(this.defaultValue);
+        sb.append(", hasMarkerValue=").append(this.hasMarkerValue);
+        if (this.hasMarkerValue) sb.append(", markerValue=").append(this.markerValue);
+        sb.append(", markerOnly=").append(this.isMarkerOnly);
         sb.append("]");
 
         return sb.toString();
@@ -182,8 +215,12 @@ public final class Option<VT> {
 
         @Nullable
         private VT defaultValue;
-        private boolean hasDefault;
-        private boolean requiresValue;
+        private boolean hasDefaultValue;
+
+        @Nullable
+        private VT markerValue;
+        private boolean hasMarkerValue;
+        private boolean isMarkerOnly;
 
         public Builder(String longToken, Parser<VT> parser) {
             this.longToken = longToken;
@@ -198,7 +235,7 @@ public final class Option<VT> {
          * @since 1.0.0
          */
         public Option<VT> create() {
-            return new Option<>(this.longToken, this.shortToken, this.parser, this.validator, this.defaultValue, this.hasDefault, this.requiresValue);
+            return new Option<>(this.longToken, this.shortToken, this.parser, this.validator, this.defaultValue, this.hasDefaultValue, this.markerValue, this.hasMarkerValue, this.isMarkerOnly);
         }
 
         /**
@@ -206,18 +243,34 @@ public final class Option<VT> {
          *
          * <p>Overrides any previously set default value.</p>
          *
-         * @param value         the default value for the option
-         * @param requiresValue whether or not this option requires a value to
-         *                      be passed
+         * @param value the default value for the option
          *
          * @return this builder instance
          *
          * @since 1.0.0
          */
-        public Builder<VT> withDefaultValue(@Nullable VT value, boolean requiresValue) {
+        public Builder<VT> withDefaultValue(@Nullable VT value) {
             this.defaultValue = value;
-            this.hasDefault = true;
-            this.requiresValue = requiresValue;
+            this.hasDefaultValue = true;
+
+            return this;
+        }
+
+        /**
+         * Sets the marker value for the option.
+         *
+         * @param value         the marker value for the option
+         * @param isMarkerOnly  whether or not the option must be used as a
+         *                      marker
+         *
+         * @return this builder instance
+         *
+         * @since 1.0.0
+         */
+        public Builder<VT> withMarkerValue(@Nullable VT value, boolean isMarkerOnly) {
+            this.markerValue = value;
+            this.hasMarkerValue = true;
+            this.isMarkerOnly = isMarkerOnly;
 
             return this;
         }
