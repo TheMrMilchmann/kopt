@@ -286,6 +286,26 @@ public final class Option<VT> {
         /**
          * Sets the marker value for the option.
          *
+         * <p>Overrides any previously set marker value.</p>
+         *
+         * <p>This is an utility method. Using it is equivalent to calling
+         * {@code builder.withMarkerValue(value, false)}.</p>
+         *
+         * @param value the marker value for the option.
+         *
+         * @return this builder instance
+         *
+         * @since 1.0.0
+         */
+        public Builder<VT> withMarkerValue(@Nullable VT value) {
+            return this.withMarkerValue(value, false);
+        }
+
+        /**
+         * Sets the marker value for the option.
+         *
+         * <p>Overrides any previously set marker value.</p>
+         *
          * @param value         the marker value for the option
          * @param isMarkerOnly  whether or not the option must be used as a
          *                      marker
