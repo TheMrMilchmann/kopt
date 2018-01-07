@@ -35,6 +35,33 @@ import javax.annotation.Nullable;
 /**
  * A command line option.
  *
+ * The syntax that may be used for an option depends on which attributes of the
+ * option have been assigned.
+ *
+ * <ul>
+ *     <li><pre>{@code --<longToken>(=<value>| <value)}
+ *       the default syntax</pre></li>
+ *     <li><pre>{@code --<longToken>[(=<value>| <value>)]}
+ *       syntax for options with a marker value</pre></li>
+ *     <li><pre>{@code --<longToken>}
+ *       syntax for marker only options </pre></li>
+ * </ul>
+ *
+ * If the option has a `shortToken`, it may also be used:
+ *
+ * <ul>
+ *     <li><pre>{@code -<shortToken>(=<value>| <value)}
+ *       the default syntax</pre></li>
+ *     <li><pre>{@code -<shortToken>[(=<value>| <value>)]}
+ *       syntax for options with a marker value</pre></li>
+ *     <li><pre>{@code -<shortToken>}
+ *       syntax for marker only options </pre></li>
+ * </ul>
+ *
+ * Using the short token of an option may be useful when setting the same value
+ * for multiple options. (`-abc` is equivalent to `-a -b -c` and `-abc="d"` is
+ * equivalent to `-a="d" -b="d" -c="d"`.)
+ *
  * @param <VT> the type of the arguments value
  *
  * @see OptionParser
