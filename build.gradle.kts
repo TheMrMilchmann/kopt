@@ -123,7 +123,7 @@ tasks {
                             "licenses" {
                                 "license" {
                                     "name"("BSD-3-Clause")
-                                    "url"("https://github.com/TheMrMilchmann/kopt/blob/master/LICENSE.md")
+                                    "url"("https://github.com/TheMrMilchmann/kopt/blob/master/LICENSE")
                                     "distribution"("repo")
                                 }
                             }
