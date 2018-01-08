@@ -96,7 +96,7 @@ abstract class CharStream {
      * @since 1.0.0
      */
     var current: Char? = null
-        protected set
+        private set
 
     /**
      * Returns the next character or `null` if the end of the stream has been
@@ -130,14 +130,14 @@ abstract class CharStream {
      *
      * @since 1.0.0
      */
-    fun currentLiteral(): String? =
+    fun currentLiteral(until: ((Char) -> Boolean)? = null): String? =
         if (position == -1 || current === null)
             null
         else
             StringBuilder().apply {
                 append(current!!)
 
-                while (next() !== null && current != ' ') {
+                while (next() !== null && !current!!.isWhitespace() && (until == null || !until.invoke(current!!))) {
                     append(current!!)
                 }
             }.toString()
@@ -149,8 +149,8 @@ abstract class CharStream {
      *
      * @since 1.0.0
      */
-    fun nextLiteral(): String? = StringBuilder().apply {
-        while (next() !== null && current != ' ') append(current)
+    fun nextLiteral(until: ((Char) -> Boolean)? = null): String? = StringBuilder().apply {
+        while (next() !== null && !current!!.isWhitespace() && (until == null || !until.invoke(current!!))) append(current!!)
     }.toString()
 
     /**
@@ -161,34 +161,35 @@ abstract class CharStream {
      * @since 1.0.0
      */
     fun currentString(): String? =
-        if (position == -1 || current === null)
-            null
-        else
-            StringBuilder().apply {
+        when (current) {
+            null -> null
+            else -> StringBuilder().apply {
                 when (current) {
-                    '"' ->  {
+                    '"' -> {
                         var escapeNext = false
 
                         while (next() !== null && !(current == '"' && !escapeNext)) {
-                            if (current == '\\' && !escapeNext)
-                                escapeNext = true
+                            escapeNext = if (current == '\\' && !escapeNext)
+                                true
                             else {
                                 append(current!!)
-                                escapeNext = false
+                                false
                             }
                         }
 
-                        if (current != '"') return null
+                        /* Consume the trailing quotation mark. */
+                        next()
                     }
                     else -> {
                         append(current!!)
 
-                        while (next() !== null && current != ' ') {
+                        while (next() !== null && !current!!.isWhitespace()) {
                             append(current!!)
                         }
                     }
                 }
             }.toString()
+        }
 
     /**
      * Parses a `String` starting from the next character.

@@ -34,9 +34,10 @@ package com.github.themrmilchmann.kopt
 
 import kotlin.jvm.*
 
-private val PATTERN_ALPHANUMERIC = "[^A-Za-z0-9]".toRegex()
+private val PATTERN_ALPHANUMERIC = "[A-Za-z0-9]+".toRegex()
 
 private val Char.isAlphanumeric: Boolean get() = (this in 'A'..'Z' || this in 'a'..'z' || this in '0'..'9')
+private val Char.isNotAlphanumeric: Boolean get() = !isAlphanumeric
 
 /**
  * Parses a `CharStream` for values taken into account all options available in
@@ -59,19 +60,21 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
     val varargValues by _varargValues
     var argIndex = 0
 
-    nextNonWhitespace()
-    while (current != null) {
+    fun currentNonWhitespace() =
+        if (current !== null && !current!!.isWhitespace()) current else nextNonWhitespace()
+
+    while (currentNonWhitespace() != null) {
         when (current) {
             '-' -> when (next()) {
                 '-' -> {
                     // Option by long token
-                    val lToken = nextLiteral()?.let { assertAlphanumeric(it) } ?: throw ParsingException("Option token required")
+                    val lToken = nextLiteral { it == '=' }?.let { assertAlphanumeric(it) } ?: throw ParsingException("Option token required")
                     val opt = pool.lOptions[lToken] ?: throw ParsingException("Unrecognized long option token: \"$lToken\"")
                     if (opt in values) throw ParsingException("Duplicate option: $opt")
 
                     when (current) {
-                        ' ', '=' -> nextString()
-                        else -> nextNonWhitespace().let { null }
+                        ' ', '='    -> nextString()
+                        else        -> null
                     }?.apply {
                         if (opt.isMarkerOnly) throw ParsingException("$opt must be used as marker option")
 
@@ -86,12 +89,12 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                     if (pool.sOptions === null) throw ParsingException("No short option tokens have been registered")
                     if (!current!!.isAlphanumeric) throw ParsingException("Option tokens must only contain alphanumeric characters")
 
-                    val opts = currentLiteral()?.map { pool.sOptions[it] ?: throw ParsingException("Unrecognized short option token: \"$it\"") } ?: throw ParsingException("Option token required")
+                    val opts = currentLiteral { it == '=' }?.let { assertAlphanumeric(it) }?.map { pool.sOptions[it] ?: throw ParsingException("Unrecognized short option token: \"$it\"") } ?: throw ParsingException("Option token required")
                     opts.forEach { if (it in values) throw ParsingException("Duplicate option: $it") }
 
                     when (current) {
-                        ' ', '=' -> nextString()
-                        else -> nextNonWhitespace().let { null }
+                        ' ', '='    -> nextString()
+                        else        -> null
                     }?.apply {
                         opts.find(Option<*>::isMarkerOnly)?.let { throw ParsingException("$it must be used as marker option") }
                         opts.forEach {
@@ -117,7 +120,6 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                             values[arg] = it
                     } ?: throw ParsingException("Could not parse argument value")
                 argIndex = Math.min(argIndex + 1, if (pool.isLastVararg) pool.args.size - 1 else pool.args.size)
-                nextNonWhitespace()
             }
         }
     }
@@ -136,5 +138,5 @@ private inline fun <VT> Argument<VT>.validateUnsafe(value: Any?) = this.validate
 private inline fun <VT> Option<VT>.validateUnsafe(value: Any?) = this.validate(value as VT?)
 
 private inline fun assertAlphanumeric(s: String) = s.apply {
-    if (PATTERN_ALPHANUMERIC.matches(s)) throw ParsingException("All characters of string '$this' should be alphanumeric")
+    if (!PATTERN_ALPHANUMERIC.matches(s)) throw ParsingException("All characters of string '$this' must be alphanumeric")
 }

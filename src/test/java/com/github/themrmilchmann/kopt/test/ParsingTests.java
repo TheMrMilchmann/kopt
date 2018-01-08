@@ -119,6 +119,7 @@ public final class ParsingTests {
         };
 
         OptionSet set = OptionParser.parse(CharStreams.streamOf(strings), pool);
+        System.out.println(set.getVarargValues(arg0));
         assertTrue(Arrays.equals(strings, set.getVarargValues(arg0).toArray()));
     }
 

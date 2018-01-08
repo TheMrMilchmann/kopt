@@ -33,11 +33,85 @@ package com.github.themrmilchmann.kopt.test;
 import com.github.themrmilchmann.kopt.*;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.*;
+
 @Test
 public final class OptionTests {
 
+    public void verifyShortTokenValueParsingExiting() {
+        Option<String> a = new Option.Builder<>("a", Parser.STRING).withShortToken('a').create();
+        Option<String> b = new Option.Builder<>("b", Parser.STRING).withShortToken('b').create();
+        Option<String> c = new Option.Builder<>("c", Parser.STRING).withShortToken('c').create();
+        Option<String> d = new Option.Builder<>("d", Parser.STRING).withShortToken('d').create();
+        Option<String> e = new Option.Builder<>("e", Parser.STRING).withShortToken('e').create();
+
+        OptionPool pool = new OptionPool.Builder()
+                .withOption(a)
+                .withOption(b)
+                .withOption(c)
+                .withOption(d)
+                .withOption(e)
+                .create();
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf("-a=\"value\" -b \"value\" -c=value -d value -e=\"value\""), pool);
+
+        assertEquals(set.get(a), "value");
+        assertEquals(set.get(b), "value");
+        assertEquals(set.get(c), "value");
+        assertEquals(set.get(d), "value");
+        assertEquals(set.get(e), "value");
+    }
+
+    public void verifyLongTokenValueParsingExiting() {
+        Option<String> a = new Option.Builder<>("a", Parser.STRING).create();
+        Option<String> b = new Option.Builder<>("b", Parser.STRING).create();
+        Option<String> c = new Option.Builder<>("c", Parser.STRING).create();
+        Option<String> d = new Option.Builder<>("d", Parser.STRING).create();
+        Option<String> e = new Option.Builder<>("e", Parser.STRING).create();
+
+        OptionPool pool = new OptionPool.Builder()
+                .withOption(a)
+                .withOption(b)
+                .withOption(c)
+                .withOption(d)
+                .withOption(e)
+                .create();
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf("--a=\"value\" --b \"value\" --c=value --d value --e=\"value\""), pool);
+
+        assertEquals(set.get(a), "value");
+        assertEquals(set.get(b), "value");
+        assertEquals(set.get(c), "value");
+        assertEquals(set.get(d), "value");
+        assertEquals(set.get(e), "value");
+    }
+
+    public void shortTokenMultiAssign() {
+        Option<String> a = new Option.Builder<>("unusedA", Parser.STRING).withShortToken('a').create();
+        Option<String> b = new Option.Builder<>("unusedB", Parser.STRING).withShortToken('b').create();
+        Option<String> c = new Option.Builder<>("unusedC", Parser.STRING).withShortToken('c').create();
+
+        OptionPool pool = new OptionPool.Builder()
+                .withOption(a)
+                .withOption(b)
+                .withOption(c)
+                .create();
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf("-abc=\"d\""), pool);
+
+        assertEquals(set.get(a), "d");
+        assertEquals(set.get(b), "d");
+        assertEquals(set.get(c), "d");
+
+        set = OptionParser.parse(CharStreams.streamOf("-abc \"d\""), pool);
+
+        assertEquals(set.get(a), "d");
+        assertEquals(set.get(b), "d");
+        assertEquals(set.get(c), "d");
+    }
+
     @Test(expectedExceptions = ParsingException.class)
-    public void useMarkerOnlyWithValue() {
+    public void useLongTokenMarkerOnlyWithValue() {
         OptionPool pool = new OptionPool.Builder()
                 .withOption(new Option.Builder<>("markerOnly", Parser.INT).withMarkerValue(42, true).create())
                 .create();
@@ -46,12 +120,30 @@ public final class OptionTests {
     }
 
     @Test(expectedExceptions = ParsingException.class)
-    public void useNonMarkerAsMarker() {
+    public void useLongTokenNonMarkerAsMarker() {
         OptionPool pool = new OptionPool.Builder()
                 .withOption(new Option.Builder<>("notAMarker", Parser.INT).create())
                 .create();
 
         OptionParser.parse(CharStreams.streamOf("--notAMarker"), pool);
+    }
+
+    @Test(expectedExceptions = ParsingException.class)
+    public void useShortTokenMarkerOnlyWithValue() {
+        OptionPool pool = new OptionPool.Builder()
+                .withOption(new Option.Builder<>("markerOnly", Parser.INT).withShortToken('m').withMarkerValue(42, true).create())
+                .create();
+
+        OptionParser.parse(CharStreams.streamOf("-m=true"), pool);
+    }
+
+    @Test(expectedExceptions = ParsingException.class)
+    public void useShortTokenNonMarkerAsMarker() {
+        OptionPool pool = new OptionPool.Builder()
+                .withOption(new Option.Builder<>("notAMarker", Parser.INT).withShortToken('n').create())
+                .create();
+
+        OptionParser.parse(CharStreams.streamOf("-n"), pool);
     }
 
 }
