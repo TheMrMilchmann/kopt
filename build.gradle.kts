@@ -1,6 +1,5 @@
-import org.gradle.jvm.tasks.Jar
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
+import org.gradle.jvm.tasks.*
+import org.jetbrains.kotlin.gradle.dsl.*
 
 /* buildscript { TODO wait for Dokka 0.9.16
     repositories {
@@ -207,7 +206,7 @@ dependencies {
     compileOnly(kotlin("stdlib-jdk8", "1.2.10"))
     compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
-    runtime(kotlin("stdlib-jdk8", "[1.0.0,)"))
+    runtime(kotlin("stdlib-jdk8", "[1.1.0,)"))
 
     testCompile("org.testng:testng:6.13.1")
 }
