@@ -34,6 +34,7 @@ import com.github.themrmilchmann.kopt.*;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 
 import static org.testng.Assert.*;
@@ -50,16 +51,16 @@ public final class ParsingTests {
                 .create();
 
         OptionSet setTrue = OptionParser.parse(CharStreams.streamOf("true"), pool);
-        assertTrue(setTrue.get(arg0));
+        assertTrue(Objects.requireNonNull(setTrue.get(arg0)));
 
         OptionSet setOne = OptionParser.parse(CharStreams.streamOf("1"), pool);
-        assertTrue(setOne.get(arg0));
+        assertTrue(Objects.requireNonNull(setOne.get(arg0)));
 
         OptionSet setFalse = OptionParser.parse(CharStreams.streamOf("0"), pool);
-        assertFalse(setFalse.get(arg0));
+        assertFalse(Objects.requireNonNull(setFalse.get(arg0)));
 
         OptionSet setZero = OptionParser.parse(CharStreams.streamOf("0"), pool);
-        assertFalse(setZero.get(arg0));
+        assertFalse(Objects.requireNonNull(setZero.get(arg0)));
     }
 
     public void parseDouble() {
@@ -84,7 +85,7 @@ public final class ParsingTests {
         for (int i = 0; i < 20; i++) {
             int e = RNG.nextInt();
             OptionSet set = OptionParser.parse(CharStreams.streamOf(e < 0 ? "\"" + e + "\"" : String.valueOf(e)), pool);
-            assertEquals((int) set.get(arg0), e);
+            assertEquals(set.get(arg0), Integer.valueOf(e));
         }
     }
 
