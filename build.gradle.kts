@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 plugins {
     maven
     signing
-    kotlin("jvm") version "1.2.10"
+    kotlin("jvm") version "1.2.20"
 }
 
 val nextVersion = "0.3.0"
