@@ -62,9 +62,12 @@ val CharSequence.stream
  */
 val Array<String>.stream
     @JvmName("streamOf") get() = this.joinToString(" ") {
-        "\"${it.removePrefix("\"")
-            .removeSuffix("\"")
-            .replace("\"", "\\\"")}\""
+        if (it.startsWith('-'))
+            it
+        else
+            "\"${it.removePrefix("\"")
+                .removeSuffix("\"")
+                .replace("\"", "\\\"")}\""
     }.stream
 
 /**

@@ -33,9 +33,8 @@ package com.github.themrmilchmann.kopt.test;
 import com.github.themrmilchmann.kopt.*;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
+import java.util.function.Function;
 
 import static org.testng.Assert.*;
 
@@ -121,6 +120,59 @@ public final class ParsingTests {
 
         OptionSet set = OptionParser.parse(CharStreams.streamOf(strings), pool);
         assertTrue(Arrays.equals(strings, set.getVarargValues(arg0).toArray()));
+    }
+
+    public void parseRealWorldString() {
+        Argument<String> arg0 = new Argument.Builder<>((it) -> it).create();
+        Argument<String> arg1 = new Argument.Builder<>((it) -> it).create();
+        Option<String> opt0 = new Option.Builder<>("test", (it) -> it).create();
+        OptionPool pool = new OptionPool.Builder()
+                .withArg(arg0)
+                .withVararg(arg1)
+                .withOption(opt0)
+                .create();
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf("single --test=foobar test1 test2"), pool);
+        assertEquals(set.get(arg0), "single");
+        assertEquals(set.get(opt0), "foobar");
+
+        String[] expected = { "test1", "test2" };
+        Collection<String> values = set.getVarargValues(arg1);
+        Iterator<String> itr = values.iterator();
+
+        for (String s : expected) {
+            assertEquals(s, itr.next());
+        }
+    }
+
+    public void parseRealWorldJoinedArray() {
+        Argument<String> arg0 = new Argument.Builder<>((it) -> it).create();
+        Argument<String> arg1 = new Argument.Builder<>((it) -> it).create();
+        Option<String> opt0 = new Option.Builder<>("test", (it) -> it).create();
+        OptionPool pool = new OptionPool.Builder()
+                .withArg(arg0)
+                .withVararg(arg1)
+                .withOption(opt0)
+                .create();
+
+        String[] args = {
+            "single",
+            "--test=foobar",
+            "test1",
+            "test2"
+        };
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf(args), pool);
+        assertEquals(set.get(arg0), "single");
+        assertEquals(set.get(opt0), "foobar");
+
+        String[] expected = { "test1", "test2" };
+        Collection<String> values = set.getVarargValues(arg1);
+        Iterator<String> itr = values.iterator();
+
+        for (String s : expected) {
+            assertEquals(s, itr.next());
+        }
     }
 
 }
