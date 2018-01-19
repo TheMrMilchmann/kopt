@@ -30,6 +30,8 @@
  */
 package com.github.themrmilchmann.kopt
 
+import java.util.*
+
 /**
  * An [OptionSet] represents a collection of [Argument]s and [Option]s
  * associated with their values.
@@ -155,9 +157,10 @@ class OptionSet internal constructor(
     fun <VT> getOrDefault(arg: Argument<VT>, alt: VT?): VT? {
         arg.assertAvailable()
         arg.assertNoVararg()
-        return when (arg) {
-            in values -> values[arg] as? VT
-            else -> if (arg.hasDefault()) arg.defaultValue else alt
+        return when {
+            values.containsKey(arg) -> values[arg] as? VT
+            arg.hasDefault()        -> arg.defaultValue
+            else                    -> alt
         }
     }
 
@@ -181,9 +184,10 @@ class OptionSet internal constructor(
     @Suppress("UNCHECKED_CAST")
     fun <VT> getOrDefault(opt: Option<VT>, alt: VT?): VT? {
         opt.assertAvailable()
-        return when (opt) {
-            in values -> values[opt] as? VT
-            else -> if (opt.hasDefaultValue()) opt.defaultValue else alt
+        return when {
+            values.containsKey(opt) -> values[opt] as? VT
+            opt.hasDefaultValue()   -> opt.defaultValue
+            else                    -> alt
         }
     }
 
@@ -205,9 +209,10 @@ class OptionSet internal constructor(
     fun <VT> getVarargValues(arg: Argument<VT>): Collection<VT?> {
         arg.assertAvailable()
         arg.assertVararg()
-        return when (arg) {
-            in values -> values[arg] as Collection<VT?>
-            else -> if (arg.hasDefault()) listOf(arg.defaultValue) else emptyList()
+        return when {
+            values.containsKey(arg) -> values[arg] as Collection<VT?>
+            arg.hasDefault()        -> Arrays.asList(arg.defaultValue)
+            else                    -> Collections.emptyList()
         }
     }
 
@@ -227,10 +232,10 @@ class OptionSet internal constructor(
      *
      * @since 1.0.0
      */
-    @JvmName("hasExplicitlySetValue")
+    @kotlin.jvm.JvmName("hasExplicitlySetValue")
     operator fun contains(arg: Argument<*>): Boolean {
         arg.assertAvailable()
-        return arg in values
+        return values.containsKey(arg)
     }
 
     /**
@@ -249,14 +254,14 @@ class OptionSet internal constructor(
      *
      * @since 1.0.0
      */
-    @JvmName("hasExplicitlySetValue")
+    @kotlin.jvm.JvmName("hasExplicitlySetValue")
     operator fun contains(opt: Option<*>): Boolean {
         opt.assertAvailable()
-        return opt in values
+        return values.containsKey(opt)
     }
 
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun Argument<*>.isVararg() = pool.isLastVararg && this === pool.args.last()
+    private inline fun Argument<*>.isVararg() = pool.isLastVararg && this === pool.args[pool.args.size - 1]
 
     @Suppress("NOTHING_TO_INLINE")
     private inline fun Argument<*>.assertVararg() { if (!isVararg()) throw IllegalArgumentException("Argument is not a vararg argument for this set: $this") }

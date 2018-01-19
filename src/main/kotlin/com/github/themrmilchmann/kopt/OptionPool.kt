@@ -30,6 +30,8 @@
  */
 package com.github.themrmilchmann.kopt
 
+import java.util.*
+
 /**
  * An `OptionPool` is a pool of available [Argument]s and [Option]s.
  *
@@ -93,16 +95,16 @@ class OptionPool private constructor(
      */
     class Builder {
 
-        private val _args: Lazy<MutableList<Argument<*>>> = lazy(::mutableListOf)
-        private val args by _args
+        private val _args: Lazy<MutableList<Argument<*>>> = Lazy(::ArrayList)
+        private val args: MutableList<Argument<*>> get() = _args.value
         private var firstOptionalArg = Int.MAX_VALUE
         private var isLastVararg = false
 
-        private val _lOptions: Lazy<MutableMap<String, Option<*>>> = lazy(::mutableMapOf)
-        private val lOptions by _lOptions
+        private val _lOptions: Lazy<MutableMap<String, Option<*>>> = Lazy(::HashMap)
+        private val lOptions: MutableMap<String, Option<*>> get() = _lOptions.value
 
-        private val _sOptions: Lazy<MutableMap<Char, Option<*>>> = lazy(::mutableMapOf)
-        private val sOptions by _sOptions
+        private val _sOptions: Lazy<MutableMap<Char, Option<*>>> = Lazy(::HashMap)
+        private val sOptions: MutableMap<Char, Option<*>> get() = _sOptions.value
 
         /**
          * Returns a new immutable `OptionPool`.
@@ -116,8 +118,8 @@ class OptionPool private constructor(
          * @since 1.0.0
          */
         fun create() = OptionPool(
-            if (_args.isInitialized()) args else emptyList(),
-            if (_lOptions.isInitialized()) lOptions else emptyMap(),
+            if (_args.isInitialized()) args else Collections.emptyList(),
+            if (_lOptions.isInitialized()) lOptions else Collections.emptyMap(),
             if (_sOptions.isInitialized()) sOptions else null,
             if (firstOptionalArg == Int.MAX_VALUE) args.size else firstOptionalArg,
             isLastVararg
@@ -138,13 +140,15 @@ class OptionPool private constructor(
          *
          * @since 1.0.0
          */
-        fun withArg(arg: Argument<*>) = apply {
+        fun withArg(arg: Argument<*>): Builder {
             if (arg in args) throw IllegalArgumentException("Duplicate argument: $arg")
             if (isLastVararg) throw IllegalArgumentException("A vararg argument may not be followed by other arguments")
             if (firstOptionalArg != Int.MAX_VALUE && !arg.isOptional) throw IllegalArgumentException("A required argument must not be preceded by an optional one")
 
             args.add(arg)
             if (arg.isOptional && firstOptionalArg == Int.MAX_VALUE) firstOptionalArg = args.indexOf(arg)
+
+            return this
         }
 
         /**
@@ -163,13 +167,15 @@ class OptionPool private constructor(
          *
          * @since 1.0.0
          */
-        fun withVararg(arg: Argument<*>) = apply {
+        fun withVararg(arg: Argument<*>): Builder {
             if (arg in args) throw IllegalArgumentException("Duplicate argument: $arg")
             if (isLastVararg) throw IllegalArgumentException("A vararg argument may not be followed by other arguments")
             if (firstOptionalArg != Int.MAX_VALUE && !arg.isOptional) throw IllegalArgumentException("A required argument must not be preceded by an optional one")
 
             args.add(arg)
             isLastVararg = true
+
+            return this
         }
 
         /**
@@ -186,17 +192,41 @@ class OptionPool private constructor(
          *
          * @since 1.0.0
          */
-        fun withOption(opt: Option<*>) = apply {
-            if (opt.longToken in lOptions) throw IllegalArgumentException("Duplicate long option token: \"${opt.longToken}\"")
+        fun withOption(opt: Option<*>): Builder {
+            if (lOptions.containsKey(opt.longToken)) throw IllegalArgumentException("Duplicate long option token: \"${opt.longToken}\"")
 
-            opt.shortToken?.let {
-                if (opt.shortToken in sOptions) throw IllegalArgumentException("Duplicate short option token: \"$it\"")
-                sOptions[it] = opt
+            val sToken = opt.shortToken
+            if (sToken !== null) {
+                if (sOptions.containsKey(sToken)) throw IllegalArgumentException("Duplicate short option token: \"$sToken\"")
+                sOptions.put(sToken, opt)
             }
 
-            lOptions[opt.longToken] = opt
+            lOptions.put(opt.longToken, opt)
+
+            return this
         }
 
     }
+
+}
+
+private object UNINITIALIZED_VALUE
+
+internal class Lazy<out T>(private var initializer: (() -> T)?) {
+
+    private var _value: Any? = UNINITIALIZED_VALUE
+
+    val value: T
+        get() {
+            if (_value === UNINITIALIZED_VALUE) {
+                _value = initializer!!()
+                initializer = null
+            }
+
+            @Suppress("UNCHECKED_CAST")
+            return _value as T
+        }
+
+    fun isInitialized(): Boolean = _value !== UNINITIALIZED_VALUE
 
 }

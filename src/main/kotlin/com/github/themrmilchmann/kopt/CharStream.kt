@@ -28,10 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-@file:JvmName("CharStreams")
+@file:kotlin.jvm.JvmName("CharStreams")
 package com.github.themrmilchmann.kopt
-
-import kotlin.jvm.*
 
 /**
  * Returns a new stream representation for a given sequence.
@@ -43,7 +41,7 @@ import kotlin.jvm.*
  * @since 1.0.0
  */
 val CharSequence.stream
-    @JvmName("streamOf") get() = object : CharStream() {
+    @kotlin.jvm.JvmName("streamOf") get() = object : CharStream() {
 
         override fun read(): Char? =
             (if (position < length - 1) get(++position) else null)
@@ -61,8 +59,8 @@ val CharSequence.stream
  * @since 1.0.0
  */
 val Array<String>.stream
-    @JvmName("streamOf") get() = this.joinToString(" ") {
-        if (it.startsWith('-'))
+    @kotlin.jvm.JvmName("streamOf") get() = this.joinToString(" ") {
+        if (it[0] == '-')
             it
         else
             "\"${it.removePrefix("\"")
@@ -110,7 +108,7 @@ abstract class CharStream {
      *
      * @since 1.0.0
      */
-    fun next(): Char? = read().also { current = it }
+    fun next(): Char? = read().apply { current = this }
 
     /**
      * Returns the next non whitespace character or `null`.
@@ -136,14 +134,14 @@ abstract class CharStream {
     fun currentLiteral(until: ((Char) -> Boolean)? = null): String? =
         if (position == -1 || current === null)
             null
-        else
-            StringBuilder().apply {
-                append(current!!)
+        else {
+            val sb = StringBuilder("$current")
+            while (next() !== null && !current!!.isWhitespace() && (until == null || !until.invoke(current!!))) {
+                sb.append(current!!)
+            }
 
-                while (next() !== null && !current!!.isWhitespace() && (until == null || !until.invoke(current!!))) {
-                    append(current!!)
-                }
-            }.toString()
+            sb.toString()
+        }
 
     /**
      * Parses a literal starting from the next character.
@@ -207,4 +205,81 @@ abstract class CharStream {
         else -> currentLiteral()
     }
 
+}
+
+fun Char.isWhitespace(): Boolean = Character.isWhitespace(this) || Character.isSpaceChar(this)
+
+private fun String.replace(oldValue: String, newValue: String, ignoreCase: Boolean = false): String =
+    splitToSequence(oldValue, ignoreCase = ignoreCase).joinToString(separator = newValue)
+
+
+private inline fun <T> T.apply(block: T.() -> Unit): T {
+    block()
+    return this
+}
+
+private val CharSequence.lastIndex: Int
+    get() = this.length - 1
+
+private fun CharSequence.startsWith(char: Char): Boolean =
+    this.length > 0 && this[0] == char
+
+private fun CharSequence.endsWith(char: Char): Boolean =
+    this.length > 0 && this[lastIndex] == char
+
+private fun CharSequence.startsWith(prefix: CharSequence): Boolean {
+    if (this is String && prefix is String)
+        return this.startsWith(prefix)
+    else
+        return regionMatchesImpl(0, prefix, 0, prefix.length)
+}
+
+private fun CharSequence.endsWith(suffix: CharSequence): Boolean {
+    if (this is String && suffix is String)
+        return this.endsWith(suffix)
+    else
+        return regionMatchesImpl(length - suffix.length, suffix, 0, suffix.length)
+}
+
+private fun String.removePrefix(prefix: CharSequence): String {
+    if (startsWith(prefix)) {
+        return subSequence(prefix.length, length).toString()
+    }
+    return this
+}
+
+private fun String.removeSuffix(suffix: CharSequence): String {
+    if (endsWith(suffix)) {
+        return subSequence(0, length - suffix.length).toString()
+    }
+    return this
+}
+
+private fun CharSequence.regionMatchesImpl(thisOffset: Int, other: CharSequence, otherOffset: Int, length: Int): Boolean {
+    if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.length - length)
+        || (otherOffset > other.length - length)) {
+        return false
+    }
+
+    for (index in 0..length-1) {
+        if (this[thisOffset + index] != other[otherOffset + index])
+            return false
+    }
+    return true
+}
+
+private fun <T> Array<out T>.joinToString(separator: CharSequence = ", ", prefix: CharSequence = "", postfix: CharSequence = "", limit: Int = -1, truncated: CharSequence = "...", transform: ((T) -> CharSequence)? = null): String {
+    val sb = StringBuffer()
+    sb.append(postfix)
+
+    var count = 0
+    for (element in this) {
+        if (++count > 1) sb.append(separator)
+        if (limit < 0 || count <= limit) {
+            sb.append(transform?.invoke(element) ?: element)
+        } else break
+    }
+    if (count in 0..limit) sb.append(truncated)
+    sb.append(postfix)
+    return sb.toString()
 }

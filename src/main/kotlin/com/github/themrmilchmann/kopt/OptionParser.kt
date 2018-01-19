@@ -28,13 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-@file:JvmName("OptionParser")
+@file:kotlin.jvm.JvmName("OptionParser")
 @file:Suppress("NOTHING_TO_INLINE")
 package com.github.themrmilchmann.kopt
 
-import kotlin.jvm.*
+import java.util.*
+import java.util.regex.Pattern
 
-private val PATTERN_ALPHANUMERIC = "[A-Za-z0-9]+".toRegex()
+private val PATTERN_ALPHANUMERIC = Pattern.compile("[A-Za-z0-9]+")
 
 private val Char.isAlphanumeric: Boolean get() = (this in 'A'..'Z' || this in 'a'..'z' || this in '0'..'9')
 private val Char.isNotAlphanumeric: Boolean get() = !isAlphanumeric
@@ -55,9 +56,8 @@ private val Char.isNotAlphanumeric: Boolean get() = !isAlphanumeric
  * @since 1.0.0
  */
 fun CharStream.parse(pool: OptionPool): OptionSet {
-    val values = mutableMapOf<Any, Any?>()
-    val _varargValues = lazy { mutableListOf<Any?>() }
-    val varargValues by _varargValues
+    val values = HashMap<Any, Any?>()
+    val _varargValues = Lazy { ArrayList<Any?>() }
     var argIndex = 0
 
     fun currentNonWhitespace() =
@@ -70,7 +70,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                     // Option by long token
                     val lToken = nextLiteral { it == '=' }?.let { assertAlphanumeric(it) } ?: throw ParsingException("Option token required")
                     val opt = pool.lOptions[lToken] ?: throw ParsingException("Unrecognized long option token: \"$lToken\"")
-                    if (opt in values) throw ParsingException("Duplicate option: $opt")
+                    if (values.containsKey(opt)) throw ParsingException("Duplicate option: $opt")
 
                     when (current) {
                         '='         -> nextString()
@@ -81,9 +81,9 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
 
                         opt.parse(this).apply {
                             opt.validateUnsafe(this)
-                            values[opt] = this
+                            values.put(opt, this)
                         }
-                    } ?: let { if (opt.hasMarkerValue()) values[opt] = opt.markerValue else throw ParsingException("$opt requires a value to be specified") }
+                    } ?: if (opt.hasMarkerValue()) values.put(opt, opt.markerValue) else throw ParsingException("$opt requires a value to be specified")
                 }
                 else -> {
                     // Option/s by short token/s
@@ -91,7 +91,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                     if (!current!!.isAlphanumeric) throw ParsingException("Option tokens must only contain alphanumeric characters")
 
                     val opts = currentLiteral { it == '=' }?.let { assertAlphanumeric(it) }?.map { pool.sOptions[it] ?: throw ParsingException("Unrecognized short option token: \"$it\"") } ?: throw ParsingException("Option token required")
-                    opts.forEach { if (it in values) throw ParsingException("Duplicate option: $it") }
+                    opts.forEach { if (values.containsKey(it)) throw ParsingException("Duplicate option: $it") }
 
                     when (current) {
                         '='         -> nextString()
@@ -102,10 +102,10 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                         opts.forEach {
                             it.parse(this).apply {
                                 it.validateUnsafe(this)
-                                values[it] = this
+                                values.put(it, this)
                             }
                         }
-                    } ?: let { opts.forEach { if (it.hasMarkerValue()) values[it] = it.markerValue else throw ParsingException("$it requires a value to be specified") } }
+                    } ?:  opts.forEach { if (it.hasMarkerValue()) values.put(it, it.markerValue) else throw ParsingException("$it requires a value to be specified") }
                 }
             }
             else -> {
@@ -114,12 +114,12 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
 
                 val arg = pool.args[argIndex]
                 currentString()?.let(arg::parse)
-                    .also(arg::validateUnsafe)
-                    .also {
-                        if (pool.args.last() === arg && pool.isLastVararg)
-                            varargValues.add(it)
+                    .apply(arg::validateUnsafe)
+                    .apply {
+                        if (pool.args[pool.args.size - 1] === arg && pool.isLastVararg)
+                            _varargValues.value.add(this)
                         else
-                            values[arg] = it
+                            values.put(arg, this)
                     } ?: throw ParsingException("Could not parse argument value")
                 argIndex = Math.min(argIndex + 1, if (pool.isLastVararg) pool.args.size - 1 else pool.args.size)
             }
@@ -129,7 +129,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
     if (argIndex < pool.firstOptionalArg && !(pool.isLastVararg && argIndex == pool.args.size - 1))
         throw ParsingException("Not all required arguments have been specified")
 
-    if (_varargValues.isInitialized()) values[pool.args.last()] = varargValues
+    if (_varargValues.isInitialized()) values.put(pool.args[pool.args.size - 1], _varargValues.value)
     return OptionSet(pool, values)
 }
 
@@ -139,6 +139,63 @@ private inline fun <VT> Argument<VT>.validateUnsafe(value: Any?) = this.validate
 @Suppress("UNCHECKED_CAST")
 private inline fun <VT> Option<VT>.validateUnsafe(value: Any?) = this.validate(value as VT?)
 
-private inline fun assertAlphanumeric(s: String) = s.apply {
-    if (!PATTERN_ALPHANUMERIC.matches(s)) throw ParsingException("All characters of string '$this' must be alphanumeric")
+private inline fun assertAlphanumeric(s: String): String {
+    if (!PATTERN_ALPHANUMERIC.matcher(s).matches()) throw ParsingException("All characters of string '$s' must be alphanumeric")
+    return s
+}
+
+private inline fun <T> Iterable<T>.forEach(action: (T) -> Unit) {
+    for (element in this) action(element)
+}
+
+private  inline fun <T> T.apply(block: T.() -> Unit): T {
+    block()
+    return this
+}
+
+private inline fun <T, R> T.let(block: (T) -> R): R {
+    return block(this)
+}
+
+private inline fun <R> CharSequence.map(transform: (Char) -> R): List<R> {
+    return mapTo(ArrayList(length), transform)
+}
+
+private inline fun <R, C : MutableCollection<in R>> CharSequence.mapTo(destination: C, transform: (Char) -> R): C {
+    for (item in this)
+        destination.add(transform(item))
+    return destination
+}
+
+private operator fun CharSequence.iterator(): CharIterator = object : CharIterator() {
+
+    private var index = 0
+
+    override fun nextChar(): Char = get(index++)
+
+    override fun hasNext(): Boolean = index < length
+
+}
+
+private inline fun <T> Iterable<T>.any(predicate: (T) -> Boolean): Boolean {
+    if (this is Collection && isEmpty()) return false
+    for (element in this) if (predicate(element)) return true
+    return false
+}
+
+private inline fun <T> Iterable<T>.find(predicate: (T) -> Boolean): T? {
+    when (this) {
+        is List -> {
+            if (isEmpty())
+                return null
+            else
+                return this[0]
+        }
+        else -> {
+            val iterator = iterator()
+            if (!iterator.hasNext())
+                return null
+            return iterator.next()
+        }
+    }
 }
