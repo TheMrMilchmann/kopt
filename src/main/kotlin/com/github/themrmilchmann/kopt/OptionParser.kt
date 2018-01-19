@@ -73,7 +73,8 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                     if (opt in values) throw ParsingException("Duplicate option: $opt")
 
                     when (current) {
-                        ' ', '='    -> nextString()
+                        '='         -> nextString()
+                        ' '         -> if (opt.isMarkerOnly || (opt.hasMarkerValue() && nextNonWhitespace() == '-')) null else currentString()
                         else        -> null
                     }?.apply {
                         if (opt.isMarkerOnly) throw ParsingException("$opt must be used as marker option")
@@ -93,7 +94,8 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                     opts.forEach { if (it in values) throw ParsingException("Duplicate option: $it") }
 
                     when (current) {
-                        ' ', '='    -> nextString()
+                        '='         -> nextString()
+                        ' '         -> if (opts.any(Option<*>::isMarkerOnly) || (opts.any(Option<*>::hasMarkerValue) && nextNonWhitespace() == '-')) null else currentString()
                         else        -> null
                     }?.apply {
                         opts.find(Option<*>::isMarkerOnly)?.let { throw ParsingException("$it must be used as marker option") }
