@@ -17,7 +17,7 @@ plugins {
     kotlin("jvm") version "1.2.20"
 }
 
-val nextVersion = "0.3.0"
+val nextVersion = "0.4.0"
 
 group = "com.github.themrmilchmann.kopt"
 version = when (deployment.type) {
