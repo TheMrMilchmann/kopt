@@ -1,3 +1,4 @@
+import org.gradle.java.*
 import org.gradle.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.*
 
@@ -15,6 +16,7 @@ plugins {
     maven
     signing
     kotlin("jvm") version "1.2.20"
+    id("org.gradle.java.experimental-jigsaw").version("0.1.1") apply false
 }
 
 val nextVersion = "0.4.0"
@@ -52,13 +54,41 @@ signing {
     sign(configurations["archives"])
 }
 
+val projectJdk9 = project("jdk9") {
+    apply {
+        plugin("java")
+        plugin("org.gradle.java.experimental-jigsaw")
+    }
+
+    the<JavaModule>().setName("com.github.themrmilchmann.kopt")
+
+    java.sourceSets["main"].allJava.setSrcDirs(mutableListOf("/java"))
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_1_9
+        targetCompatibility = JavaVersion.VERSION_1_9
+    }
+
+    tasks {
+        "compileJava"(JavaCompile::class) {
+            source = java.sourceSets["main"].allJava
+        }
+    }
+}
+
 tasks {
     "test"(Test::class) {
         useTestNG()
     }
 
     "jar"(Jar::class) {
+        dependsOn(projectJdk9.tasks["compileJava"])
+
         baseName = project.name
+
+        from(projectJdk9.tasks["compileJava"].outputs.files) {
+            include("module-info.class")
+        }
 
         manifest {
             attributes(mapOf(
@@ -66,8 +96,7 @@ tasks {
                 "Specification-Version" to project.version,
                 "Specification-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>",
                 "Implementation-Version" to project.version,
-                "Implementation-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>",
-                "Automatic-Module-Name" to "com.github.themrmilchmann.kopt"
+                "Implementation-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>"
             ))
         }
     }
@@ -198,15 +227,17 @@ data class Deployment(
     val password: String? = null
 )
 
-repositories {
-    mavenCentral()
-}
+allprojects {
+    repositories {
+        mavenCentral()
+    }
 
-dependencies {
-    compileOnly(kotlin("stdlib-jdk8", "1.2.10"))
-    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+    dependencies {
+        compileOnly(kotlin("stdlib-jdk8", "1.2.10"))
+        compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
-    runtime(kotlin("stdlib-jdk8", "[1.1.0,)"))
+        runtime(kotlin("stdlib-jdk8", "[1.1.0,)"))
 
-    testCompile("org.testng:testng:6.13.1")
+        testCompile("org.testng:testng:6.13.1")
+    }
 }

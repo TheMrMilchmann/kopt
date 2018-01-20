@@ -1,7 +1,7 @@
 #!/bin/bash
 
 SLUG="TheMrMilchmann/kopt"
-JDK="oraclejdk8"
+JDK="openjdk8"
 BRANCH="master"
 
 set -e
