@@ -122,6 +122,24 @@ public final class ParsingTests {
         assertTrue(Arrays.equals(strings, set.getVarargValues(arg0).toArray()));
     }
 
+    public void parseMarkerFollowedByArg() {
+        Argument<String> arg0 = new Argument.Builder<>((it) -> it).create();
+        Option<String> opt0 = new Option.Builder<>("test", (it) -> it).withMarkerValue("marker", true).create();
+        OptionPool pool = new OptionPool.Builder()
+                .withArg(arg0)
+                .withOption(opt0)
+                .create();
+
+        String[] args = {
+            "--test",
+            "arg"
+        };
+
+        OptionSet set = OptionParser.parse(CharStreams.streamOf(args), pool);
+        assertEquals(set.get(opt0), "marker");
+        assertEquals(set.get(arg0), "arg");
+    }
+
     public void parseRealWorldString() {
         Argument<String> arg0 = new Argument.Builder<>((it) -> it).create();
         Argument<String> arg1 = new Argument.Builder<>((it) -> it).create();
