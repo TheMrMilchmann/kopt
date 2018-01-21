@@ -34,10 +34,9 @@ package com.github.themrmilchmann.kopt
 
 import kotlin.jvm.*
 
-private val PATTERN_ALPHANUMERIC = "[A-Za-z0-9]+".toRegex()
-
-private val Char.isAlphanumeric: Boolean get() = (this in 'A'..'Z' || this in 'a'..'z' || this in '0'..'9')
-private val Char.isNotAlphanumeric: Boolean get() = !isAlphanumeric
+private val Char.isAlphabetic: Boolean get() = (this in 'A'..'Z' || this in 'a'..'z')
+private val Char.isNumeric: Boolean get() = (this in '0'..'9')
+private val Char.isAlphanumeric: Boolean get() = isAlphabetic || isNumeric
 
 /**
  * Parses a `CharStream` for values taken into account all options available in
@@ -59,53 +58,119 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
     val _varargValues = lazy { mutableListOf<Any?>() }
     val varargValues by _varargValues
     var argIndex = 0
+    var ignoreOptions = false
 
     fun currentNonWhitespace() =
         if (current !== null && !current!!.isWhitespace()) current else nextNonWhitespace()
 
+    fun appendArgument(value: String) {
+        val arg = pool.args[argIndex]
+        value.let(arg::parse)
+            .also(arg::validateUnsafe)
+            .also {
+                if (pool.args.last() === arg && pool.isLastVararg)
+                    varargValues.add(it)
+                else
+                    values[arg] = it
+            }
+        argIndex = Math.min(argIndex + 1, if (pool.isLastVararg) pool.args.size - 1 else pool.args.size)
+    }
+
     while (currentNonWhitespace() != null) {
-        when (current) {
-            '-' -> when (next()) {
+        when {
+            current == '-' && !ignoreOptions -> when (next()) {
                 '-' -> {
-                    // Option by long token
-                    val lToken = nextLiteral { it == '=' }?.let { assertAlphanumeric(it) } ?: throw ParsingException("Option token required")
-                    val opt = pool.lOptions[lToken] ?: throw ParsingException("Unrecognized long option token: \"$lToken\"")
-                    if (opt in values) throw ParsingException("Duplicate option: $opt")
+                    /*
+                     * A double hyphen delimiter may be followed by either
+                     *
+                     * 1) a whitespace character, in which case the sequence is interpreted as option parsing terminator, or
+                     * 2) an alphabetic literal, in which case the literal is interpreted as long option token.
+                     */
+                    next()
+                    when {
+                        current!!.isWhitespace() -> ignoreOptions = true
+                        else -> {
+                            val cL = currentLiteral { it == '='} ?: throw ParsingException("Unexpected character: $current")
+                            if (!cL.all(Char::isAlphanumeric)) throw ParsingException("A long option token must only consist of alphanumeric characters ($cL)")
 
-                    when (current) {
-                        '='         -> nextString()
-                        ' '         -> if (opt.isMarkerOnly || (opt.hasMarkerValue() && nextNonWhitespace() == '-')) null else nextString()
-                        else        -> null
-                    }?.apply {
-                        if (opt.isMarkerOnly) throw ParsingException("$opt must be used as marker option")
+                            val option = pool.lOptions[cL] ?: throw ParsingException("Unrecognized long option token: \"$cL\"")
+                            if (option in values) throw ParsingException("Duplicate option: $option")
 
-                        opt.parse(this).apply {
-                            opt.validateUnsafe(this)
-                            values[opt] = this
+                            when {
+                                current === null -> null
+                                current == '=' -> {
+                                    if (option.isMarkerOnly) throw ParsingException("$option does not accept a value")
+
+                                    nextString()
+                                }
+                                option.isMarkerOnly -> null
+                                current!!.isWhitespace() -> when (next()) {
+                                    '-' -> {
+                                        if (option.hasMarkerValue())
+                                            null
+                                        else
+                                            currentString()
+                                    }
+                                    else -> currentString()
+                                }
+                                else -> null
+                            }?.apply {
+                                option.parse(this).apply {
+                                    option.validateUnsafe(this)
+                                    values[option] = this
+                                }
+                            } ?: if (option.hasMarkerValue()) values[option] = option.markerValue else throw ParsingException("$option requires a value to be specified")
                         }
-                    } ?: let { if (opt.hasMarkerValue()) values[opt] = opt.markerValue else throw ParsingException("$opt requires a value to be specified") }
+                    }
                 }
                 else -> {
-                    // Option/s by short token/s
-                    if (pool.sOptions === null) throw ParsingException("No short option tokens have been registered")
-                    if (!current!!.isAlphanumeric) throw ParsingException("Option tokens must only contain alphanumeric characters")
+                    /*
+                     * A single hyphen delimiter may be followed by either
+                     *
+                     * 1) an alphabetic literal, in which case the literal is interpreted as chain of short option tokens, or
+                     * 2) a numeric literal, in which case the literal is interpreted as negative number.
+                     */
+                    val cL = currentLiteral { it == '='} ?: throw ParsingException("Unexpected character: $current")
+                    println(cL)
 
-                    val opts = currentLiteral { it == '=' }?.let { assertAlphanumeric(it) }?.map { pool.sOptions[it] ?: throw ParsingException("Unrecognized short option token: \"$it\"") } ?: throw ParsingException("Option token required")
-                    opts.forEach { if (it in values) throw ParsingException("Duplicate option: $it") }
+                    when {
+                        cL.all(Char::isAlphabetic) -> {
+                            if (pool.sOptions === null) throw ParsingException("No short option tokens have been registered")
 
-                    when (current) {
-                        '='         -> nextString()
-                        ' '         -> if (opts.any(Option<*>::isMarkerOnly) || (opts.any(Option<*>::hasMarkerValue) && nextNonWhitespace() == '-')) null else nextString()
-                        else        -> null
-                    }?.apply {
-                        opts.find(Option<*>::isMarkerOnly)?.let { throw ParsingException("$it must be used as marker option") }
-                        opts.forEach {
-                            it.parse(this).apply {
-                                it.validateUnsafe(this)
-                                values[it] = this
+                            val options = cL.map { pool.sOptions[it] ?: throw ParsingException("Unrecognized short option token: \"$it\"") }
+                            options.forEachIndexed { i, option ->
+                                if (option in values || options.filterIndexed { index, _ -> i != index }.any { it === option })
+                                    throw ParsingException("Duplicate option: $option")
                             }
+                            if (options.any(Option<*>::isMarkerOnly) && options.any { !it.hasMarkerValue() })
+                                throw ParsingException("")
+
+                            when {
+                                current === null -> null
+                                current == '=' -> {
+                                    if (options.any(Option<*>::isMarkerOnly)) throw ParsingException("$cL contains an option that does not accept a value")
+
+                                    nextString()
+                                }
+                                current!!.isWhitespace() -> when (next()) {
+                                    '-'     -> if (options.all(Option<*>::hasMarkerValue)) null else currentString()
+                                    else    -> if (options.any(Option<*>::isMarkerOnly)) null else currentString()
+                                }
+                                else -> null
+                            }?.apply {
+                                options.forEach {
+                                    it.parse(this).apply {
+                                        it.validateUnsafe(this)
+                                        values[it] = this
+                                    }
+                                }
+                            } ?: options.forEach { if (it.hasMarkerValue()) values[it] = it.markerValue else throw ParsingException("$it requires a value to be specified") }
                         }
-                    } ?: let { opts.forEach { if (it.hasMarkerValue()) values[it] = it.markerValue else throw ParsingException("$it requires a value to be specified") } }
+                        cL.all(Char::isNumeric) -> {
+                            if (pool.args.isEmpty()) throw ParsingException("No arguments have been registered")
+                            appendArgument("-$cL")
+                        }
+                    }
                 }
             }
             else -> {
@@ -138,7 +203,3 @@ private inline fun <VT> Argument<VT>.validateUnsafe(value: Any?) = this.validate
 
 @Suppress("UNCHECKED_CAST")
 private inline fun <VT> Option<VT>.validateUnsafe(value: Any?) = this.validate(value as VT?)
-
-private inline fun assertAlphanumeric(s: String) = s.apply {
-    if (!PATTERN_ALPHANUMERIC.matches(s)) throw ParsingException("All characters of string '$this' must be alphanumeric")
-}

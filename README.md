@@ -7,46 +7,144 @@ kopt
 
 kopt is a small command line parser library for the JVM.
 
-*kopt is fully compatible with Java and Kotlin.*
+*kopt is fully compatible with Java 8 and Kotlin 1.1 (or later).*
 
-Command Line Argument Convention
---------------------------------
+Specification
+-------------
 
-The convention used by kopt's parser is a modified version of the [GNU convention](https://www.gnu.org/prep/standards/html_node/Command_002dLine-Interfaces.html).
-The most significant differences are:
-
-* Options are not allowed to appear multiple times.
-
-* Options and their values must be separated by either a single space character
-  (` `) or an equals character (`=`).
-
-* Using the double hyphen delimiter (`--`) to terminate option parsing is not
-(yet) supported.
-
-**The full convention looks as follows:**
-
-* Arguments are options if they begin with a hyphen delimiter (`-`).
-
-* Option tokens must only contain alphanumeric characters.
-    * _short_ option tokens are single alphanumeric characters, and
-    * _long_ option tokens are sequences of alphanumeric characters of an
-      arbitrary length.
-
-* A character following a single hyphen (`-`) is interpreted as short option
-  token.
-    * short option tokens may be linked. Thus, `-abc` is equivalent to
-      `-a -b -c`.
+1. **Command line**<br>
     
-* Characters following a double hyphen delimiter (`--`) are interpreted as long
-  option token.
-  
-* Options may be supplied in any order, but they are not allowed to appear
-  multiple times.
-  
-* Options and their values must be separated by either a single space character
-  (` `) or an equals character (`=`).
-  
-* Arguments may be optional. However, if an argument is optional all following
-  arguments must also be optional.
-  
-* Trailing arguments may be vararg arguments.
+    1. **Terminating option parsing**<br>
+        A double hyphen delimiter followed by a whitespace character
+        (e.g. `-- `) terminates option parsing. Thus, section (3) is effectively
+        irrelevant for anything that is parsed after this character sequence
+        and even literals prefixed with hyphens are interpreted as arguments. 
+
+1. **Arguments**<br>
+    Arguments are interpreted index-based.
+
+    1. **Optional arguments**<br>
+        An argument may be optional, that is, it is not required to pass a value for said argument.
+    
+        1. An optional argument must only be followed by other optional arguments.
+    
+    1. **Vararg arguments**<br>
+        The trailing argument may be a vararg argument, that is, 
+    
+        1. A vararg argument must always be the trailing argument.
+        1. A vararg argument may be optional.
+
+1. **Options**<br>
+    Options are interpreted key-based.
+    
+    1. **Option tokens**
+        An option token is used to identify an option. Two different kinds of
+        tokens exist.
+        - Option tokens are case-sensitive.
+    
+        1. **Long token**<br>
+            *A long token is an alphanumeric literal.*
+            
+            An alphanumeric literal prefixed with a double hyphen delimiter
+            (`--`) is interpreted as long option token.
+    
+        1. **Short token**<br>
+            *A short token is an alphabetic character.*
+            
+            An alphabetic character prefixed with a single hyphen delimiter
+            (`-`) is interpreted as short option token.
+    
+            Multiple short tokens may be chained behind a single hyphen
+            delimiter. Thus, `-a -b -c` and `-abc` are equivalent. (Furthermore,
+            `-a <value> -b <value> -c <value>` and `-abc <value>` are
+            equivalent.)
+            Short tokens may only be chained if the way the represented options
+            parse values do not conflict.
+            + Default options and marker options must be followed by a value.
+            + Marker options and marker-only options may not be followed by a
+              value.
+            - **Default options and marker-only options may not be chained.**
+
+            An alphabetic literal prefixed with a single hyphen delimiter
+            (`-`) is interpreted as a set of chained short option tokens.
+            
+        If an option token and a following string are separated by either an
+        equals sign (`=`) or a single whitespace character (e.g. a space ` `),
+        the string is interpreted as a value for the option represented by the
+        token.
+    
+    1. **Marker options**<br>
+        An option may be a marker option, that is, the option does not require a
+        value to be passed and will instead use a predefined value if the option is
+        present and no value is passed.<br>
+        Additionally, an option may be a marker-only option, that is, the option
+        does not accept a value to be passed.
+        
+Grammar
+-------
+
+### Notation
+This section informally explains the grammar notation used below.
+
+#### Symbols and naming
+- Terminal symbol names start with an uppercase letter, e.g. String.
+- Nonterminal symbol names start with lowercase letter, e.g. commandLine.
+- Each production starts with a colon (:).
+- Symbol definitions may have many productions and are terminated by a semicolon (;).
+- Symbol definitions may be prepended with attributes, e.g. start attribute denotes a start symbol.
+
+#### EBNF expressions
+- Operator `|` denotes *alternative*.
+- Operator `*` denotes *iteration* (zero or more).
+- Operator `+` denotes *iteration* (one or more).
+- Operator `?` denotes *option* (zero or one).
+
+### Syntax
+
+```
+start
+commandLine
+    : argument+ ("--" string*)?
+    ;
+
+argument
+    : string
+    : option
+    ;
+    
+option
+    : defaultOption
+    : markerOption
+    : markerOnlyOption
+    ;
+    
+defaultOption
+    : "-" ShortToken+ "=" String
+    : "-" ShortToken+ " " String
+    : "--" LongToken "=" String
+    : "--" LongToken " " String
+    ;
+    
+markerOption
+    : defaultOption
+    : markerOnlyOption
+    ;
+
+markerOnlyOption
+    : "-" ShortToken+
+    : "--" LongToken
+    ;
+
+ShortOptionToken
+    : <any alphabetic character>
+    ;
+    
+Literal
+    : <any non-whitespace character>+
+    ;
+
+String
+    : Literal
+    : "\"" <any character>* "\""
+    ;
+```

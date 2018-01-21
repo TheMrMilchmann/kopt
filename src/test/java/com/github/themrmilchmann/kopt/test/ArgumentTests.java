@@ -33,10 +33,11 @@ package com.github.themrmilchmann.kopt.test;
 import com.github.themrmilchmann.kopt.*;
 import org.testng.annotations.Test;
 
+import static org.testng.Assert.*;
+
 @Test
 public final class ArgumentTests {
 
-    @Test(expectedExceptions = ParsingException.class)
     public void doNotSatisfyAllRequired() {
         OptionPool pool = new OptionPool.Builder()
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN).create())
@@ -44,7 +45,7 @@ public final class ArgumentTests {
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("true true"), pool);
+        assertThrows(ParsingException.class, () -> OptionParser.parse(CharStreams.streamOf("true true"), pool));
     }
 
     public void satisfyRequiredOnly() {
