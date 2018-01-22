@@ -42,8 +42,8 @@ public final class CharStreamTests {
                 .withArg(new Argument.Builder<>(Parser.INT).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("\"-42242\" 224242"), pool);
-        OptionParser.parse(CharStreams.streamOf(new String[] { "\"-42242\"", "224242" }), pool);
+        OptionParser.parse(CharTools.streamOf("\"-42242\" 224242"), pool);
+        OptionParser.parse(CharTools.streamOf(new String[] { "\"-42242\"", "224242" }), pool);
     }
 
     public void arrayConversionParityString() {
@@ -53,8 +53,8 @@ public final class CharStreamTests {
                 .withArg(new Argument.Builder<>(Parser.STRING).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("\"Just one String!\" Hello World"), pool);
-        OptionParser.parse(CharStreams.streamOf(new String[] { "Just one String!", "Hello", "World" }), pool);
+        OptionParser.parse(CharTools.streamOf("\"Just one String!\" Hello World"), pool);
+        OptionParser.parse(CharTools.streamOf(new String[] { "Just one String!", "Hello", "World" }), pool);
     }
 
 }

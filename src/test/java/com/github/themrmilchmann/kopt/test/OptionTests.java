@@ -53,7 +53,7 @@ public final class OptionTests {
                 .withOption(e)
                 .create();
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf("-a=\"value\" -b \"value\" -c=value -d value -e=\"value\""), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf("-a=\"value\" -b \"value\" -c=value -d value -e=\"value\""), pool);
 
         assertEquals(set.get(a), "value");
         assertEquals(set.get(b), "value");
@@ -77,7 +77,7 @@ public final class OptionTests {
                 .withOption(e)
                 .create();
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf("--a=\"value\" --b \"value\" --c=value --d value --e=\"value\""), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf("--a=\"value\" --b \"value\" --c=value --d value --e=\"value\""), pool);
 
         assertEquals(set.get(a), "value");
         assertEquals(set.get(b), "value");
@@ -97,13 +97,13 @@ public final class OptionTests {
                 .withOption(c)
                 .create();
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf("-abc=\"d\""), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf("-abc=\"d\""), pool);
 
         assertEquals(set.get(a), "d");
         assertEquals(set.get(b), "d");
         assertEquals(set.get(c), "d");
 
-        set = OptionParser.parse(CharStreams.streamOf("-abc \"d\""), pool);
+        set = OptionParser.parse(CharTools.streamOf("-abc \"d\""), pool);
 
         assertEquals(set.get(a), "d");
         assertEquals(set.get(b), "d");
@@ -116,7 +116,7 @@ public final class OptionTests {
                 .withOption(new Option.Builder<>("markerOnly", Parser.INT).withMarkerValue(42, true).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("--markerOnly=true"), pool);
+        OptionParser.parse(CharTools.streamOf("--markerOnly=true"), pool);
     }
 
     @Test(expectedExceptions = ParsingException.class)
@@ -125,7 +125,7 @@ public final class OptionTests {
                 .withOption(new Option.Builder<>("notAMarker", Parser.INT).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("--notAMarker"), pool);
+        OptionParser.parse(CharTools.streamOf("--notAMarker"), pool);
     }
 
     @Test(expectedExceptions = ParsingException.class)
@@ -134,7 +134,7 @@ public final class OptionTests {
                 .withOption(new Option.Builder<>("markerOnly", Parser.INT).withShortToken('m').withMarkerValue(42, true).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("-m=true"), pool);
+        OptionParser.parse(CharTools.streamOf("-m=true"), pool);
     }
 
     @Test(expectedExceptions = ParsingException.class)
@@ -143,7 +143,7 @@ public final class OptionTests {
                 .withOption(new Option.Builder<>("notAMarker", Parser.INT).withShortToken('n').create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("-n"), pool);
+        OptionParser.parse(CharTools.streamOf("-n"), pool);
     }
 
 }

@@ -139,8 +139,8 @@ ShortOptionToken
     : <any alphabetic character>
     ;
     
-Literal
-    : <any non-whitespace character>+
+LongOptionToken
+    : <any alphanumeric character>+
     ;
 
 String

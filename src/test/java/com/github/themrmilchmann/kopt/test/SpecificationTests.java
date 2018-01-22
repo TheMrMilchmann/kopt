@@ -49,19 +49,19 @@ public final class SpecificationTests {
 
         {
             String command = "-1";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(arg0), Integer.valueOf(-1));
         }
 
         expectThrows(ParsingException.class, () -> {
             String command = "-f -1";
-            OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionParser.parse(CharTools.streamOf(command), pool);
         });
 
         expectThrows(ParsingException.class, () -> {
             String command = "-f 1";
-            OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionParser.parse(CharTools.streamOf(command), pool);
         });
     }
 
@@ -80,17 +80,17 @@ public final class SpecificationTests {
 
         expectThrows(ParsingException.class, () -> {
             String command = "-of";
-            OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionParser.parse(CharTools.streamOf(command), pool);
         });
 
         expectThrows(ParsingException.class, () -> {
             String command = "-of bar";
-            OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionParser.parse(CharTools.streamOf(command), pool);
         });
 
         {
             String command = "-mo bar";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(arg0), "bar");
             assertEquals(set.get(optMarker), "marker");
@@ -99,7 +99,7 @@ public final class SpecificationTests {
 
         {
             String command = "-mf bar";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optMarker), "bar");
             assertEquals(set.get(optFoo), "bar");
@@ -107,7 +107,7 @@ public final class SpecificationTests {
 
         {
             String command = "-mo";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optMarker), "marker");
             assertEquals(set.get(optMarkerOnly), "only");
@@ -125,7 +125,7 @@ public final class SpecificationTests {
 
         {
             String command = "-tf bar";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optTest), "bar");
             assertEquals(set.get(optFoo), "bar");
@@ -133,7 +133,7 @@ public final class SpecificationTests {
 
         {
             String command = "-tf=bar";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optTest), "bar");
             assertEquals(set.get(optFoo), "bar");
@@ -149,14 +149,14 @@ public final class SpecificationTests {
 
         {
             String command = "--test=-f";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optTest), "-f");
         }
 
         {
             String command = "--test=--f";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optTest), "--f");
         }
@@ -173,7 +173,7 @@ public final class SpecificationTests {
 
         {
             String command = "--test -f";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optTest), "mv");
             assertEquals(set.get(optFoo), "bar");
@@ -181,7 +181,7 @@ public final class SpecificationTests {
 
         {
             String command = "--test --foo";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(optTest), "mv");
             assertEquals(set.get(optFoo), "bar");
@@ -199,7 +199,7 @@ public final class SpecificationTests {
 
         {
             String command = "--test hi";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(arg0), "hi");
             assertEquals(set.get(optTest), "mv");
@@ -207,7 +207,7 @@ public final class SpecificationTests {
 
         expectThrows(ParsingException.class, () -> {
             String command = "--test=hi";
-            OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionParser.parse(CharTools.streamOf(command), pool);
         });
     }
 
@@ -222,12 +222,12 @@ public final class SpecificationTests {
 
         expectThrows(ParsingException.class, () -> {
             String command = "value0 --value1";
-            OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionParser.parse(CharTools.streamOf(command), pool);
         });
 
         {
             String command = "value0 -- value1";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(arg0), "value0");
             assertEquals(set.get(arg1), "value1");
@@ -235,7 +235,7 @@ public final class SpecificationTests {
 
         {
             String command = "value0 -- --value1";
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(command), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(command), pool);
 
             assertEquals(set.get(arg0), "value0");
             assertEquals(set.get(arg1), "--value1");

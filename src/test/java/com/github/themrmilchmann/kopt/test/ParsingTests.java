@@ -49,16 +49,16 @@ public final class ParsingTests {
                 .withArg(arg0)
                 .create();
 
-        OptionSet setTrue = OptionParser.parse(CharStreams.streamOf("true"), pool);
+        OptionSet setTrue = OptionParser.parse(CharTools.streamOf("true"), pool);
         assertTrue(Objects.requireNonNull(setTrue.get(arg0)));
 
-        OptionSet setOne = OptionParser.parse(CharStreams.streamOf("1"), pool);
+        OptionSet setOne = OptionParser.parse(CharTools.streamOf("1"), pool);
         assertTrue(Objects.requireNonNull(setOne.get(arg0)));
 
-        OptionSet setFalse = OptionParser.parse(CharStreams.streamOf("0"), pool);
+        OptionSet setFalse = OptionParser.parse(CharTools.streamOf("0"), pool);
         assertFalse(Objects.requireNonNull(setFalse.get(arg0)));
 
-        OptionSet setZero = OptionParser.parse(CharStreams.streamOf("0"), pool);
+        OptionSet setZero = OptionParser.parse(CharTools.streamOf("0"), pool);
         assertFalse(Objects.requireNonNull(setZero.get(arg0)));
     }
 
@@ -70,7 +70,7 @@ public final class ParsingTests {
 
         for (int i = 0; i < 20; i++) {
             double e = RNG.nextDouble();
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(String.valueOf(e)), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(String.valueOf(e)), pool);
             assertEquals(set.get(arg0), e);
         }
     }
@@ -83,7 +83,7 @@ public final class ParsingTests {
 
         for (int i = 0; i < 20; i++) {
             int e = RNG.nextInt();
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(e < 0 ? "\"" + e + "\"" : String.valueOf(e)), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(e < 0 ? "\"" + e + "\"" : String.valueOf(e)), pool);
             assertEquals(set.get(arg0), Integer.valueOf(e));
         }
     }
@@ -101,7 +101,7 @@ public final class ParsingTests {
         };
 
         for (String s : strings) {
-            OptionSet set = OptionParser.parse(CharStreams.streamOf(s.contains(" ") ? "\"" + s.replace("\"", "\\\"") + "\"" : s.replace("\"", "\\\"")), pool);
+            OptionSet set = OptionParser.parse(CharTools.streamOf(s.contains(" ") ? "\"" + s.replace("\"", "\\\"") + "\"" : s.replace("\"", "\\\"")), pool);
             assertEquals(set.get(arg0), s);
         }
     }
@@ -118,7 +118,7 @@ public final class ParsingTests {
             "Noch Mehr \"Tests\"..."
         };
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf(strings), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf(strings), pool);
         assertTrue(Arrays.equals(strings, set.getVarargValues(arg0).toArray()));
     }
 
@@ -135,7 +135,7 @@ public final class ParsingTests {
             "arg"
         };
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf(args), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf(args), pool);
         assertEquals(set.get(opt0), "marker");
         assertEquals(set.get(arg0), "arg");
     }
@@ -150,7 +150,7 @@ public final class ParsingTests {
                 .withOption(opt0)
                 .create();
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf("single --test=foobar test1 test2"), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf("single --test=foobar test1 test2"), pool);
         assertEquals(set.get(arg0), "single");
         assertEquals(set.get(opt0), "foobar");
 
@@ -180,7 +180,7 @@ public final class ParsingTests {
             "test2"
         };
 
-        OptionSet set = OptionParser.parse(CharStreams.streamOf(args), pool);
+        OptionSet set = OptionParser.parse(CharTools.streamOf(args), pool);
         assertEquals(set.get(arg0), "single");
         assertEquals(set.get(opt0), "foobar");
 

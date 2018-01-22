@@ -34,10 +34,6 @@ package com.github.themrmilchmann.kopt
 
 import kotlin.jvm.*
 
-private val Char.isAlphabetic: Boolean get() = (this in 'A'..'Z' || this in 'a'..'z')
-private val Char.isNumeric: Boolean get() = (this in '0'..'9')
-private val Char.isAlphanumeric: Boolean get() = isAlphabetic || isNumeric
-
 /**
  * Parses a `CharStream` for values taken into account all options available in
  * the given pool.
@@ -61,7 +57,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
     var ignoreOptions = false
 
     fun currentNonWhitespace() =
-        if (current !== null && !current!!.isWhitespace()) current else nextNonWhitespace()
+        if (last !== null && !last!!.isWhitespace()) last else skip { !it.isWhitespace() }
 
     fun appendArgument(value: String) {
         val arg = pool.args[argIndex]
@@ -78,7 +74,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
 
     while (currentNonWhitespace() != null) {
         when {
-            current == '-' && !ignoreOptions -> when (next()) {
+            last == '-' && !ignoreOptions -> when (next()) {
                 '-' -> {
                     /*
                      * A double hyphen delimiter may be followed by either
@@ -88,30 +84,25 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                      */
                     next()
                     when {
-                        current!!.isWhitespace() -> ignoreOptions = true
+                        last!!.isWhitespace() -> ignoreOptions = true
                         else -> {
-                            val cL = currentLiteral { it == '='} ?: throw ParsingException("Unexpected character: $current")
+                            val cL = readLongOptionToken() ?: throw ParsingException("Unexpected character: $last")
                             if (!cL.all(Char::isAlphanumeric)) throw ParsingException("A long option token must only consist of alphanumeric characters ($cL)")
 
                             val option = pool.lOptions[cL] ?: throw ParsingException("Unrecognized long option token: \"$cL\"")
                             if (option in values) throw ParsingException("Duplicate option: $option")
 
                             when {
-                                current === null -> null
-                                current == '=' -> {
+                                last === null -> null
+                                last == '=' -> {
                                     if (option.isMarkerOnly) throw ParsingException("$option does not accept a value")
 
-                                    nextString()
+                                    readString(advance = 1)
                                 }
                                 option.isMarkerOnly -> null
-                                current!!.isWhitespace() -> when (next()) {
-                                    '-' -> {
-                                        if (option.hasMarkerValue())
-                                            null
-                                        else
-                                            currentString()
-                                    }
-                                    else -> currentString()
+                                last!!.isWhitespace() -> when (next()) {
+                                    '-'     -> if (option.hasMarkerValue()) null else readString()
+                                    else    -> readString()
                                 }
                                 else -> null
                             }?.apply {
@@ -130,8 +121,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                      * 1) an alphabetic literal, in which case the literal is interpreted as chain of short option tokens, or
                      * 2) a numeric literal, in which case the literal is interpreted as negative number.
                      */
-                    val cL = currentLiteral { it == '='} ?: throw ParsingException("Unexpected character: $current")
-                    println(cL)
+                    val cL = readShortOptionTokenChainOrArg() ?: throw ParsingException("Unexpected character: $last")
 
                     when {
                         cL.all(Char::isAlphabetic) -> {
@@ -146,15 +136,15 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                                 throw ParsingException("")
 
                             when {
-                                current === null -> null
-                                current == '=' -> {
+                                last === null -> null
+                                last == '=' -> {
                                     if (options.any(Option<*>::isMarkerOnly)) throw ParsingException("$cL contains an option that does not accept a value")
 
-                                    nextString()
+                                    readString(advance = 1)
                                 }
-                                current!!.isWhitespace() -> when (next()) {
-                                    '-'     -> if (options.all(Option<*>::hasMarkerValue)) null else currentString()
-                                    else    -> if (options.any(Option<*>::isMarkerOnly)) null else currentString()
+                                last!!.isWhitespace() -> when (next()) {
+                                    '-'     -> if (options.all(Option<*>::hasMarkerValue)) null else readString()
+                                    else    -> if (options.any(Option<*>::isMarkerOnly)) null else readString()
                                 }
                                 else -> null
                             }?.apply {
@@ -170,6 +160,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                             if (pool.args.isEmpty()) throw ParsingException("No arguments have been registered")
                             appendArgument("-$cL")
                         }
+                        else -> throw ParsingException("Illegal sequence: $cL")
                     }
                 }
             }
@@ -178,7 +169,7 @@ fun CharStream.parse(pool: OptionPool): OptionSet {
                 if (pool.args.isEmpty()) throw ParsingException("No arguments have been registered")
 
                 val arg = pool.args[argIndex]
-                currentString()?.let(arg::parse)
+                readString()?.let(arg::parse)
                     .also(arg::validateUnsafe)
                     .also {
                         if (pool.args.last() === arg && pool.isLastVararg)

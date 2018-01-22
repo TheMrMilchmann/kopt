@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-@file:JvmName("CharStreams")
+@file:JvmName("CharTools")
 package com.github.themrmilchmann.kopt
 
 import kotlin.jvm.*
@@ -45,10 +45,19 @@ import kotlin.jvm.*
 val CharSequence.stream
     @JvmName("streamOf") get() = object : CharStream() {
 
+        var position: Int = -1
+
+        override fun available(): Int =
+            if (position == - 1) length else length - position - 1
+
         override fun read(): Char? =
             (if (position < length - 1) get(++position) else null)
 
     }
+
+val Char.isAlphabetic: Boolean get() = this in 'A'..'Z' || this in 'a'..'z'
+val Char.isNumeric: Boolean get() = this in '0'..'9'
+val Char.isAlphanumeric: Boolean get() = isAlphabetic || isNumeric
 
 /**
  * Joins all elements of the array to a single String and returns a new stream
@@ -82,100 +91,75 @@ val Array<String>.stream
 abstract class CharStream {
 
     /**
-     * The current position.
-     *
-     * The initial position is `-1`, and the maximal position is the upper limit
-     * of the source.
+     * The last character that has been read.
      *
      * @since 1.0.0
      */
-    var position: Int = -1
-        protected set
-
-    /**
-     * The character at the current position or `null` if the position is not
-     * within the source's boundaries.
-     *
-     * @since 1.0.0
-     */
-    var current: Char? = null
+    var last: Char? = null
         private set
 
-    /**
-     * Returns the next character or `null` if the end of the stream has been
-     * reached.
-     *
-     * @return the next character or `null` if the end of the stream has been
-     *         reached
-     *
-     * @since 1.0.0
-     */
-    fun next(): Char? = read().also { current = it }
-
-    /**
-     * Returns the next non whitespace character or `null`.
-     *
-     * @return the next non whitespace character or `null`
-     *
-     * @since 1.0.0
-     */
-    fun nextNonWhitespace(): Char? {
-        while (next() !== null && current!!.isWhitespace());
-        return current
-    }
+    abstract fun available(): Int
 
     protected abstract fun read(): Char?
 
-    /**
-     * Parses a literal starting from the current character.
-     *
-     * @return the parsed string or `null`
-     *
-     * @since 1.0.0
-     */
-    fun currentLiteral(until: ((Char) -> Boolean)? = null): String? =
-        if (position == -1 || current === null)
+    fun next(): Char? = read().also { last = it }
+
+    fun skip(advance: Int): Char? {
+        if (last === null && available() > 0) next()
+        for (i in 0 until advance) {
+            println("0 - $i - $advance")
+            if (next() === null) return null
+        }
+        return last
+    }
+
+    fun skip(advance: Int = 0, until: (Char) -> Boolean): Char? {
+        if (skip(advance) === null) return null
+        while (available() > 0  && !until.invoke(last!!)) next()
+        return last
+    }
+
+    private fun collect(until: (Char) -> Boolean, onEach: ((Char) -> Unit)? = null): String? =
+        if (available() < 1 && last === null)
             null
         else
-            StringBuilder().apply {
-                append(current!!)
+            StringBuilder().run {
+                if (last === null && available() > 0) next()
 
-                while (next() !== null && !current!!.isWhitespace() && (until == null || !until.invoke(current!!))) {
-                    append(current!!)
+                while (last !== null && !until.invoke(last!!)) {
+                    onEach?.invoke(last!!)
+                    append(last!!)
+                    next()
                 }
-            }.toString()
 
-    /**
-     * Parses a literal starting from the next character.
-     *
-     * @return the parsed string or `null`
-     *
-     * @since 1.0.0
-     */
-    fun nextLiteral(until: ((Char) -> Boolean)? = null): String? = StringBuilder().apply {
-        while (next() !== null && !current!!.isWhitespace() && (until == null || !until.invoke(current!!))) append(current!!)
-    }.toString()
+                toString()
+            }
 
-    /**
-     * Parses a `String` starting from the current character.
-     *
-     * @return the parsed string or `null`
-     *
-     * @since 1.0.0
-     */
-    fun currentString(): String? =
-        when (current) {
-            null -> null
-            else -> StringBuilder().apply {
-                when (current) {
+    fun readShortOptionTokenChainOrArg(advance: Int = 0): String? = when (skip(advance)) {
+        null -> null
+        else -> collect({ it.isWhitespace() || it == '=' })
+    }
+
+    fun readLongOptionToken(advance: Int = 0): String? = when (skip(advance)) {
+        null -> null
+        else -> collect({ it.isWhitespace() || it == '=' }) { if (!it.isAlphanumeric) throw ParsingException("Illegal character: $it") }
+    }
+
+    fun readString(advance: Int = 0, skipWhitespace: Boolean = false): String? {
+        skip(advance)
+        if (skipWhitespace) skip(until = { !it.isWhitespace() })
+        return when (last) {
+            null    -> null
+            '"'     -> StringBuilder().apply {
+                when (last) {
                     '"' -> {
                         var escapeNext = false
 
-                        while (next() !== null && !(current == '"' && !escapeNext)) {
-                            escapeNext = if (current == '\\' && !escapeNext)
+                        while (next() !== null && !(last == '"' && !escapeNext)) {
+                            escapeNext = if (last == '\\' && !escapeNext)
                                 true
                             else {
-                                append(current!!)
+                                append(last!!)
                                 false
                             }
                         }
@@ -184,27 +168,16 @@ abstract class CharStream {
                         next()
                     }
                     else -> {
-                        append(current!!)
+                        append(last!!)
 
-                        while (next() !== null && !current!!.isWhitespace()) {
-                            append(current!!)
+                        while (next() !== null && !last!!.isWhitespace()) {
+                            append(last!!)
                         }
                     }
                 }
             }.toString()
+            else    -> collect(Char::isWhitespace)
         }
-
-    /**
-     * Parses a `String` starting from the next character.
-     *
-     * @return the parsed string or `null`
-     *
-     * @since 1.0.0
-     */
-    fun nextString(): String? = when (next()) {
-        null -> null
-        '"' -> currentString()
-        else -> currentLiteral()
     }
 
 }

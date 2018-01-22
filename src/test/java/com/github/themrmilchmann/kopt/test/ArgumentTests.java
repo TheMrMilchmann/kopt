@@ -45,7 +45,7 @@ public final class ArgumentTests {
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN).create())
                 .create();
 
-        assertThrows(ParsingException.class, () -> OptionParser.parse(CharStreams.streamOf("true true"), pool));
+        assertThrows(ParsingException.class, () -> OptionParser.parse(CharTools.streamOf("true true"), pool));
     }
 
     public void satisfyRequiredOnly() {
@@ -57,7 +57,7 @@ public final class ArgumentTests {
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN, true).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("true true"), pool);
+        OptionParser.parse(CharTools.streamOf("true true"), pool);
     }
 
     public void satisfySomeOptional() {
@@ -69,7 +69,7 @@ public final class ArgumentTests {
                 .withArg(new Argument.Builder<>(Parser.BOOLEAN, true).create())
                 .create();
 
-        OptionParser.parse(CharStreams.streamOf("true true true true"), pool);
+        OptionParser.parse(CharTools.streamOf("true true true true"), pool);
     }
 
 }
