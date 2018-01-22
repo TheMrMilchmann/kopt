@@ -186,6 +186,23 @@ public final class Argument<VT> {
             return this;
         }
 
+        /**
+         * Sets the validator for the argument.
+         *
+         * <p>Overrides any previously set validator.</p>
+         *
+         * @param validator the validator for the argument
+         *
+         * @return this builder instance
+         *
+         * @since 1.0.0
+         */
+        public Builder<VT> withValidator(Validator<VT> validator) {
+            this.validator = validator;
+
+            return this;
+        }
+
     }
 
 }
