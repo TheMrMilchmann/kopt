@@ -86,8 +86,10 @@ tasks {
 
         baseName = project.name
 
-        from(projectJdk9.tasks["compileJava"].outputs.files) {
-            include("module-info.class")
+        into("META-INF/versions/9") {
+            from(projectJdk9.tasks["compileJava"].outputs.files) {
+                include("module-info.class")
+            }
         }
 
         manifest {
@@ -96,7 +98,8 @@ tasks {
                 "Specification-Version" to project.version,
                 "Specification-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>",
                 "Implementation-Version" to project.version,
-                "Implementation-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>"
+                "Implementation-Vendor" to "Leon Linhart <themrmilchmann@gmail.com>",
+                "Multi-Release" to "true"
             ))
         }
     }
