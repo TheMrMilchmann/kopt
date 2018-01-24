@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.gradle.dsl.*
 plugins {
     maven
     signing
-    kotlin("jvm") version "1.2.20"
+    kotlin("jvm") version "1.2.21"
     id("org.gradle.java.experimental-jigsaw").version("0.1.1") apply false
 }
 
@@ -236,7 +236,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly(kotlin("stdlib-jdk8", "1.2.10"))
+        compileOnly(kotlin("stdlib-jdk8"))
         compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
         runtime(kotlin("stdlib-jdk8", "[1.1.0,)"))
