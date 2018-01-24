@@ -13,10 +13,10 @@ jdk:
     - openjdk8
     - oraclejdk9
 
+install: true
+
 script:
     - jdk_switcher use oraclejdk9
-    - ./gradlew :jdk9:compileJava
-    - jdk_switcher use openjdk8
     - ./gradlew install --info -S -Psnapshot
     - jdk_switcher use $TRAVIS_JDK_VERSION
     - java -version

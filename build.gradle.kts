@@ -1,3 +1,4 @@
+import org.gradle.internal.jvm.Jvm
 import org.gradle.java.*
 import org.gradle.jvm.tasks.*
 import org.jetbrains.kotlin.gradle.dsl.*
@@ -62,7 +63,7 @@ val projectJdk9 = project("jdk9") {
 
     the<JavaModule>().setName("com.github.themrmilchmann.kopt")
 
-    java.sourceSets["main"].allJava.setSrcDirs(mutableListOf("/java"))
+    java.sourceSets["main"].java.setSrcDirs(mutableListOf("java"))
 
     java {
         sourceCompatibility = JavaVersion.VERSION_1_9
@@ -71,7 +72,8 @@ val projectJdk9 = project("jdk9") {
 
     tasks {
         "compileJava"(JavaCompile::class) {
-            source = java.sourceSets["main"].allJava
+            onlyIf { JavaVersion.toVersion(toolChain.version) >= JavaVersion.VERSION_1_9 }
+            options.compilerArgs.addAll(arrayOf("--release", "9"))
         }
     }
 }
@@ -79,6 +81,11 @@ val projectJdk9 = project("jdk9") {
 tasks {
     "test"(Test::class) {
         useTestNG()
+    }
+
+    "compileJava"(JavaCompile::class) {
+        onlyIf { JavaVersion.toVersion(toolChain.version) == JavaVersion.VERSION_1_9 }
+        options.compilerArgs.addAll(arrayOf("--release", "8"))
     }
 
     "jar"(Jar::class) {
@@ -236,7 +243,7 @@ allprojects {
     }
 
     dependencies {
-        compileOnly(kotlin("stdlib-jdk8"))
+        compileOnly(kotlin("stdlib-jdk8", "1.2.21"))
         compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
         runtime(kotlin("stdlib-jdk8", "[1.1.0,)"))
