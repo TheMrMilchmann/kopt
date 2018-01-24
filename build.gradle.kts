@@ -20,7 +20,7 @@ plugins {
     id("org.gradle.java.experimental-jigsaw").version("0.1.1") apply false
 }
 
-val nextVersion = "0.4.0"
+val nextVersion = "0.5.0"
 
 group = "com.github.themrmilchmann.kopt"
 version = when (deployment.type) {
