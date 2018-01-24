@@ -107,7 +107,6 @@ abstract class CharStream {
     fun skip(advance: Int): Char? {
         if (last === null && available() > 0) next()
         for (i in 0 until advance) {
-            println("0 - $i - $advance")
             if (next() === null) return null
         }
         return last
