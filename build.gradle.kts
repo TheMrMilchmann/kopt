@@ -1,23 +1,28 @@
-import org.gradle.internal.jvm.Jvm
 import org.gradle.java.*
 import org.gradle.jvm.tasks.*
+import org.jetbrains.dokka.gradle.*
 import org.jetbrains.kotlin.gradle.dsl.*
 
-/* buildscript { TODO wait for Dokka 0.9.16
+buildscript {
     repositories {
         jcenter()
+        maven("https://dl.bintray.com/kotlin/kotlin-eap")
     }
 
     dependencies {
-        classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.15")
+        classpath("org.jetbrains.dokka:dokka-gradle-plugin:0.9.16-eap-3")
     }
-}*/
+}
 
 plugins {
     maven
     signing
     kotlin("jvm") version "1.2.21"
     id("org.gradle.java.experimental-jigsaw").version("0.1.1") apply false
+}
+
+apply {
+    plugin("org.jetbrains.dokka")
 }
 
 val nextVersion = "0.5.0"
@@ -116,14 +121,14 @@ tasks {
         classifier = "sources"
         from(java.sourceSets["main"].allSource)
     }
-/*
+
     val dokka = "dokka"(DokkaTask::class) {
         outputFormat = "javadoc"
         outputDirectory = "$buildDir/javadoc"
     }
-*/
+
     val javadocJar = "javadocJar"(Jar::class) {
-        //dependsOn(dokka)
+        dependsOn(dokka)
 
         baseName = project.name
         classifier = "javadoc"
