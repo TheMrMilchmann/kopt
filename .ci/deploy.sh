@@ -19,7 +19,7 @@ if [ "$TRAVIS_REPO_SLUG" == "$SLUG" ] && [ "$TRAVIS_JDK_VERSION" == "$JDK" ] && 
 
     echo -e "[deploy.sh] Publishing documentation...\n"
 
-    ./gradlew aggregateDocs --parallel -Psnapshot
+    ./gradlew dokka --parallel -Psnapshot
 
     cp -R build/docs/html $HOME/docs-latest
 
