@@ -108,7 +108,7 @@ commandLine
     ;
 
 argument
-    : string
+    : String
     : option
     ;
     
@@ -144,7 +144,7 @@ LongOptionToken
     ;
 
 String
-    : Literal
+    : <any non-whitespace character>+
     : "\"" <any character>* "\""
     ;
 ```
