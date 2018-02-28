@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/license-BSD-blue.svg)](https://github.com/TheMrMilchmann/kopt/blob/master/LICENSE.md)
+[![License](https://img.shields.io/badge/license-BSD-blue.svg)](https://github.com/TheMrMilchmann/kopt/blob/master/LICENSE)
 [![Build Status](https://travis-ci.org/TheMrMilchmann/kopt.svg?branch=master)](https://travis-ci.org/TheMrMilchmann/kopt)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.themrmilchmann.kopt/kopt/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.themrmilchmann.kopt/kopt)
 
